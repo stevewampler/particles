@@ -9,12 +9,12 @@ import com.sgw.particles.factories.{PlanetaryParticleSystemFactory, StringPartic
 object ParticleSystemSimulator extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "Particles"
-    val psType = 0
+    val psType = 1
     contents = ParticleSystemView(
       psType match {
         case 0 => StringParticleSystemFactory.createParticleSystem(numParticles = 6, spread = 30)
         case 1 => {
-          val i = 0
+          val i = 5
           def anchorFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) =  ((col == 0 || col == numCols - 1))
           def particleFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) = true
           BeamParticleSystemFactory.createParticleSystem(
@@ -23,9 +23,9 @@ object ParticleSystemSimulator extends SimpleSwingApplication {
             spread  = 30,
             anchorFilter = anchorFilter,
             particleFilter = particleFilter,
-            springConst  = Array( 500, 5000, 2000, 1000, 1000)(i),
-            dampingCoeff = Array( 150,  200,  500,  500,  200)(i),
-            maxForce     = Array(1000, 3000, 1000, 1000,  900)(i)
+            springConst  = Array( 500, 5000, 2000, 1000, 1000,  500)(i),
+            dampingCoeff = Array( 150,  200,  500,  500,  200,    5)(i),
+            maxForce     = Array(1000, 3000, 1000, 1000,  900, 1500)(i)
           )
         }
         case 2 => {

@@ -44,6 +44,7 @@ class Vector3D(val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0) ex
     val vlen = len
     if (vlen < 0.000001) Vector3D() else this / len
   }
+  def xyNormal = Vector3D(-y, x, z)
 
   def projectOnTo(v2: Vector3D) = {
     val v2norm = v2.normalize
