@@ -9,13 +9,40 @@ import com.sgw.particles.factories.{PlanetaryParticleSystemFactory, StringPartic
 object ParticleSystemSimulator extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "Particles"
+
     val psType = 1
     contents = ParticleSystemView(
       psType match {
-        case 0 => StringParticleSystemFactory.createParticleSystem(numParticles = 6, spread = 30)
+        case 0 => StringParticleSystemFactory.createParticleSystem(
+          numParticles = 6,
+          spread = 30,
+          force1Factories =
+            GravityFactory() ::
+            DragFactory(
+              flowFunc = ParticlePositionFunction(
+                CompositeVector3DFunction(
+                  XYNormalVector3DFunction :: ScaleVector3DFunction(0.5) :: Nil
+                )
+              )
+            ) ::
+            DragFactory(
+              flowFunc = ParticleTimeFunction(
+                SinWaveVector3DFunction(
+                  offset     = Vector3D(0.0), // m/s
+                  amplitude  = Vector3D(50.0), // m/s
+                  frequency  = Vector3D(0.25, 1.0, 1.0), // cycles/sec
+                  phase      = Vector3D() // radians
+                )
+              )
+            ) ::
+            Nil,
+          force2Factories =
+            SpringDamperFactory(5, 10, 1, maxForce = 500) ::
+            Nil
+        )
         case 1 => {
           val i = 5
-          def anchorFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) =  ((col == 0 || col == numCols - 1))
+          def anchorFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) =  col == 0 || col == numCols - 1
           def particleFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) = true
           BeamParticleSystemFactory.createParticleSystem(
             numRows = 3,
@@ -30,7 +57,7 @@ object ParticleSystemSimulator extends SimpleSwingApplication {
         }
         case 2 => {
           val i = 1
-          def anchorFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) =  (row == 0 && (col == 0 || col == numCols - 1))
+          def anchorFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) =  row == 0 && (col == 0 || col == numCols - 1)
           def particleFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) = col >= row && (numCols - col - 1) >= row
           BeamParticleSystemFactory.createParticleSystem(
             numRows = 3,

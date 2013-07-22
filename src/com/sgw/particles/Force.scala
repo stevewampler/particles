@@ -1,15 +1,47 @@
 package com.sgw.particles
 
-//---------------------------
-// Double Functions
+//-------------------------
+// Force Factories
 
+trait Force1Factory {
+  def apply(p: Particle): Force1
+}
 
+trait Force2Factory {
+  def apply(p1: Particle, p2: Particle): Force2
+}
 
+case class GravityFactory(g: Double = -9.81) extends Force1Factory {
+  def apply(p: Particle) = Gravity(p, g)
+}
 
+case class GravitationalForceFactory(bigG: Double = 6.674 * Math.pow(10.0, -11)) extends Force2Factory {
+  def apply(p1: Particle, p2: Particle) = GravitationalForce(p1, p2, bigG)
+}
 
-//------------------------
-// Particle Functions
+case class SpringFactory(springConstant: Double, restLength: Double, maxForce: Double = Double.MaxValue) extends Force2Factory {
+  def apply(p1: Particle, p2: Particle) = Spring(p1, p2, springConstant, restLength, maxForce)
+}
 
+case class ConstantForceFactory(forceVector: Vector3D) extends Force1Factory {
+  def apply(p: Particle) = ConstantForce(p, forceVector)
+}
+
+case class RocketFactory(forceFunc: ParticleFunction) extends Force1Factory {
+  def apply(p: Particle) = Rocket(p, forceFunc)
+}
+
+case class DragFactory(fluidDensity: Double = 0.5, dragCoeff: Double = 0.47, flowFunc: ParticleFunction = ZeroVector3DParticleFunction) extends Force1Factory {
+  def apply(p: Particle) = Drag(p, fluidDensity, dragCoeff, flowFunc)
+}
+
+case class DamperFactory(viscousDampingCoeff: Double = 0.5, maxForce: Double = Double.MaxValue) extends Force2Factory {
+  def apply(p1: Particle, p2: Particle) = Damper(p1, p2, viscousDampingCoeff, maxForce)
+}
+
+case class SpringDamperFactory(springConstant: Double, restLength: Double, viscousDampingCoeff: Double, maxForce: Double = Double.MaxValue) extends Force2Factory {
+  def apply(p1: Particle, p2: Particle) = SpringDamper(p1, p2, springConstant, restLength, viscousDampingCoeff, maxForce)
+}
 
 
 //-------------------------
@@ -22,12 +54,12 @@ trait Force {
   var broken = false
   def force: Vector3D
   def maxForce = Double.MaxValue
-  def apply: Unit
+  def apply(): Unit
 }
 
 trait Force1 extends Force {
   val p: Particle
-  def apply = {
+  def apply() = {
     val f = force
     broken = broken || f.len > maxForce
     if (!broken) p.a = p.a + f / p.m
@@ -37,7 +69,7 @@ trait Force1 extends Force {
 trait Force2 extends Force {
   val p1: Particle
   val p2: Particle
-  def apply = {
+  def apply() = {
     val f = force
     broken = broken || f.len > maxForce
     if (!broken) {
@@ -47,10 +79,10 @@ trait Force2 extends Force {
   }
 }
 
-case class Gravity(p: Particle, g: Double = -9.81) extends Force {
+case class Gravity(p: Particle, g: Double = -9.81) extends Force1 {
   private val gv = Vector3D(0.0, g, 0.0)
   def force = gv * p.m
-  def apply = p.a = p.a + gv
+  override def apply() = p.a = p.a + gv
 }
 
 // Mass of Sun: 1.989E30 kg
@@ -61,8 +93,8 @@ case class Gravity(p: Particle, g: Double = -9.81) extends Force {
 // Mass of Moon: 7.34767309E22 kilograms
 // Distance of Earth to Moon: 384,400 km
 case class GravitationalForce(
-    val p1: Particle,
-    val p2: Particle,
+    p1: Particle,
+    p2: Particle,
     bigG: Double = 6.674 * Math.pow(10.0, -11)) extends Force2 {
   def force = {
     val value = (p2.p - p1.p).normalize * bigG * p1.m * p2.m / Math.pow((p1.p - p2.p).len, 2)

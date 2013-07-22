@@ -10,8 +10,8 @@ case class ConstantVector3DFunction(const: Vector3D) extends Vector3DFunction {
 
 /**
  * A Vector3DFunction that returns a random Vector3D between the specified min and max Vector3Ds.
- * @param min
- * @param max
+ * @param min The minimum value of the resulting random Vector.
+ * @param max The maximum value of hte resulting random Vector.
  */
 case class RandomVector3DFunction(min: Vector3D, max: Vector3D) extends Vector3DFunction {
   def apply(v: Vector3D) = Vector3D(
@@ -30,7 +30,7 @@ case class SinWaveVector3DFunction(
   def apply(theta: Vector3D) = offset + (amplitude * (theta * frequency * 2 * Math.PI + phase).sin)
 }
 
-object NormalVector3DFunction extends Vector3DFunction {
+object XYNormalVector3DFunction extends Vector3DFunction {
   def apply(v: Vector3D) = v.xyNormal
 }
 

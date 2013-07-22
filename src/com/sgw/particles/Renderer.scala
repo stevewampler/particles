@@ -20,6 +20,7 @@ object Renderer {
     case springDamper: SpringDamper => SpringDamperRenderer(springDamper)
     case drag: Drag => DragRenderer(drag)
     case constant: ConstantForce => ConstantForceRenderer(constant)
+    case rocket: Rocket => RocketRenderer(rocket)
     case _ => throw new IllegalArgumentException("unknown object type: " + obj)
   }
 }
@@ -89,4 +90,8 @@ case class DragRenderer(drag: Drag) extends Renderer {
 
 case class ConstantForceRenderer(constant: ConstantForce) extends Renderer {
   def render(g: Graphics2D, bounds: Bounds3D) = RendererUtils.drawForce(g, constant, constant.p.p, constant.p.p - constant.force, bounds)
+}
+
+case class RocketRenderer(rocket: Rocket) extends Renderer {
+  def render(g: Graphics2D, bounds: Bounds3D) = RendererUtils.drawForce(g, rocket, rocket.p.p, rocket.p.p - rocket.force, bounds)
 }
