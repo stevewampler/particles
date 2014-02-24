@@ -27,8 +27,8 @@ case class ConstantForceFactory(forceVector: Vector3D) extends Force1Factory {
   def apply(p: Particle) = ConstantForce(p, forceVector)
 }
 
-case class RocketFactory(forceFunc: ParticleFunction) extends Force1Factory {
-  def apply(p: Particle) = Rocket(p, forceFunc)
+case class ParticleFunctionForceFactory(forceFunc: ParticleFunction) extends Force1Factory {
+  def apply(p: Particle) = ParticleFunctionForce(p, forceFunc)
 }
 
 case class DragFactory(fluidDensity: Double = 0.5, dragCoeff: Double = 0.47, flowFunc: ParticleFunction = ZeroVector3DParticleFunction) extends Force1Factory {
@@ -50,39 +50,52 @@ case class SpringDamperFactory(springConstant: Double, restLength: Double, visco
 /**
  * A function that applies a force to one or more particles over the specified delta time.
  */
-trait Force {
-  var broken = false
+trait Force extends CanDie {
+  var dead = false
+  var t: Double = 0.0
+  var age: Double = 0.0
+  val maxAge = Double.MaxValue
   def force: Vector3D
   def maxForce = Double.MaxValue
-  def apply(): Unit
+  def apply(t: Double): Unit
 }
 
 trait Force1 extends Force {
   val p: Particle
-  def apply() = {
+  def apply(t: Double) = {
+    val dt = t - this.t
+    age = age + dt
     val f = force
-    broken = broken || f.len > maxForce
-    if (!broken) p.a = p.a + f / p.m
+    dead = dead || f.len > maxForce || age > maxAge || p.dead
+    if (!dead) p.a = p.a + f / p.m
   }
 }
 
 trait Force2 extends Force {
   val p1: Particle
   val p2: Particle
-  def apply() = {
+  def apply(t: Double) = {
+    val dt = t - this.t
+    age = age + dt
     val f = force
-    broken = broken || f.len > maxForce
-    if (!broken) {
+    dead = dead || f.len > maxForce || age > maxAge || p1.dead || p2.dead
+    if (!dead) {
       p1.a = p1.a + f / p1.m
       p2.a = p2.a - f / p2.m
     }
   }
 }
 
-case class Gravity(p: Particle, g: Double = -9.81) extends Force1 {
+case class Gravity(p: Particle, g: Double = -9.81, override val maxAge: Double = Double.MaxValue) extends Force1 {
   private val gv = Vector3D(0.0, g, 0.0)
   def force = gv * p.m
-  override def apply() = p.a = p.a + gv
+  override def apply(t: Double) = {
+    this.t = t
+    dead = dead || age > maxAge || p.dead
+    if (!dead) {
+      p.a = p.a + gv
+    }
+  }
 }
 
 // Mass of Sun: 1.989E30 kg
@@ -95,7 +108,8 @@ case class Gravity(p: Particle, g: Double = -9.81) extends Force1 {
 case class GravitationalForce(
     p1: Particle,
     p2: Particle,
-    bigG: Double = 6.674 * Math.pow(10.0, -11)) extends Force2 {
+    bigG: Double = 6.674 * Math.pow(10.0, -11),
+    override val maxAge: Double = Double.MaxValue) extends Force2 {
   def force = {
     val value = (p2.p - p1.p).normalize * bigG * p1.m * p2.m / Math.pow((p1.p - p2.p).len, 2)
     value
@@ -114,17 +128,20 @@ case class Spring(
     p2: Particle,
     springConstant: Double,
     restLength: Double,
-    override val maxForce: Double = Double.MaxValue) extends SpringTrait
+    override val maxForce: Double = Double.MaxValue,
+    override val maxAge: Double   = Double.MaxValue) extends SpringTrait
 
 case class ConstantForce(
     p: Particle,
-    forceVector: Vector3D) extends Force1 {
+    forceVector: Vector3D,
+    override val maxAge: Double = Double.MaxValue) extends Force1 {
   def force = forceVector
 }
 
-case class Rocket(
+case class ParticleFunctionForce(
     override val p: Particle,
-    forceFunc: ParticleFunction) extends Force1 {
+    forceFunc: ParticleFunction,
+    override val maxAge: Double = Double.MaxValue) extends Force1 {
   def force = forceFunc(p)
 }
 
@@ -132,7 +149,8 @@ case class Drag(
     override val p: Particle,
     fluidDensity: Double = 0.5,
     dragCoeff: Double = 0.47,
-    flowFunc: ParticleFunction = ZeroVector3DParticleFunction) extends Force1 {
+    flowFunc: ParticleFunction  = ZeroVector3DParticleFunction,
+    override val maxAge: Double = Double.MaxValue) extends Force1 {
   // m^2 / s^2 * kg / m^3 * m^2 = (kg * m) / s^2
   def force = {
     val flow = flowFunc(p)
@@ -164,7 +182,8 @@ case class Damper(
     override val p1: Particle,
     override val p2: Particle,
     viscousDampingCoeff: Double = 0.5,
-    override val maxForce: Double = Double.MaxValue) extends DamperTrait
+    override val maxForce: Double = Double.MaxValue,
+    override val maxAge: Double   = Double.MaxValue) extends DamperTrait
 
 case class SpringDamper(
     p1: Particle,
@@ -172,7 +191,8 @@ case class SpringDamper(
     springConstant: Double,
     restLength: Double,
     viscousDampingCoeff: Double,
-    override val maxForce: Double = Double.MaxValue) extends SpringTrait with DamperTrait {
+    override val maxForce: Double = Double.MaxValue,
+    override val maxAge: Double   = Double.MaxValue) extends SpringTrait with DamperTrait {
   override def force = super.springForce + super.damperForce
 }
 

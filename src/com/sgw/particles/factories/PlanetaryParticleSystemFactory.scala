@@ -27,9 +27,9 @@ object PlanetaryParticleSystemFactory {
     val bounds    = ParticleSystemUtils.bounds(particles) * 2.1
 
     ParticleSystem(
-      particles,
-      forces,
-      bounds
+      particles = particles,
+      forces = forces,
+      bounds = bounds
     )
   }
 }

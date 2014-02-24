@@ -47,9 +47,9 @@ object StringParticleSystemFactory {
     val bounds = ParticleSystemUtils.bounds(particles) * 35
 
     ParticleSystem(
-      particles,
-      forces,
-      bounds
+      particles = particles,
+      forces = forces,
+      bounds = bounds
     )
   }
 }

@@ -46,10 +46,8 @@ class Vector3D(val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0) ex
   }
   def xyNormal = Vector3D(-y, x, z)
 
-  def projectOnTo(v2: Vector3D) = {
-    val v2norm = v2.normalize
-    v2norm * dot_product(v2norm)
-  }
+  def projectOnTo(v2: Vector3D) = projectOnToNormal(v2.normalize)
+  def projectOnToNormal(normal: Vector3D) = normal * dot_product(normal)
 
   def -(v2: Vector3D) = sub(v2)
   def +(v2: Vector3D) = add(v2)
