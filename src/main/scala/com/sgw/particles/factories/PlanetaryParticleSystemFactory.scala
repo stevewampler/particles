@@ -2,15 +2,17 @@ package com.sgw.particles.factories
 
 import com.sgw.particles.{ParticleSystemUtils, ParticleSystem, Vector3D, Particle}
 import com.sgw.particles.GravitationalForce
+import com.sgw.particles.utils.JSON
 
 /**
  * author: steve
  */
 // Mass of Moon: 7.34767309E22 kilograms
 // Distance of Earth to Moon: 384,400 km
-object PlanetaryParticleSystemFactory {
+object PlanetaryParticleSystemFactory extends ParticleSystemFactory {
+  val name = "Planetary"
   val sun = Particle()
-  def createParticleSystem() = {
+  def apply(config: JSON) = {
     val sun     = Particle(m = 1.9890E30, radius=6.955E8)
     val mercury = Particle(m = 0.3301E24, p = Vector3D(0.460E11), v = Vector3D(0.0, -5.898E4), radius = 2.440E6)
     val venus   = Particle(m = 4.8676E24, p = Vector3D(1.075E11), v = Vector3D(0.0, -3.502E4), radius = 3.396E6)
@@ -27,9 +29,9 @@ object PlanetaryParticleSystemFactory {
     val bounds    = ParticleSystemUtils.bounds(particles) * 2.1
 
     ParticleSystem(
-      particles = particles,
-      forces = forces,
-      bounds = bounds
+      particles,
+      forces,
+      bounds
     )
   }
 }

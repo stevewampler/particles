@@ -8,7 +8,13 @@ package com.sgw.particles
  * Copyright 2013: Steve Wampler
  */
 object Vector3D {
-  def apply(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) = new Vector3D(x, y, z)
+  def apply(list: List[Double]): Vector3D = list.size match {
+    case 0 => ZeroValue
+    case 1 => apply(list(0))
+    case 2 => apply(list(0), list(1))
+    case _ => apply(list(0), list(1), list(2))
+  }
+  def apply(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0): Vector3D = new Vector3D(x, y, z)
 
   lazy val ZeroValue = Vector3D()
   lazy val MaxValue  = Vector3D(Double.MaxValue, Double.MaxValue, Double.MaxValue)
@@ -44,10 +50,11 @@ class Vector3D(val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0) ex
     val vlen = len
     if (vlen < 0.000001) Vector3D() else this / len
   }
-  def xyNormal = Vector3D(-y, x, z)
 
-  def projectOnTo(v2: Vector3D) = projectOnToNormal(v2.normalize)
-  def projectOnToNormal(normal: Vector3D) = normal * dot_product(normal)
+  def projectOnTo(v2: Vector3D) = {
+    val v2norm = v2.normalize
+    v2norm * dot_product(v2norm)
+  }
 
   def -(v2: Vector3D) = sub(v2)
   def +(v2: Vector3D) = add(v2)

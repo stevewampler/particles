@@ -1,0 +1,5 @@
+{
+    "type" : "Planetary",
+    "dt" : 86400.0,
+    "sleep" : 0.01
+}

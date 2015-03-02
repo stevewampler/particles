@@ -1,8 +1,15 @@
 package com.sgw.particles
 
-/**
- * author: steve
- */
+import com.sgw.particles.utils.JSON
+
+object Bounds3D {
+  def apply(config: JSON): Bounds3D =
+    Bounds3D(
+      config.getVector3D("min").getOrElse(Vector3D.MinValue),
+      config.getVector3D("max").getOrElse(Vector3D.MaxValue)
+    )
+}
+
 case class Bounds3D(min: Vector3D, max: Vector3D) {
   def width  = max.x - min.x
   def height = max.y - min.y

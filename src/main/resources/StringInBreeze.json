@@ -1,0 +1,89 @@
+{
+    "type" : "Simple",
+    "particles" : {
+        "Anchor" : {
+            "mass" : 999999999,
+            "pos"  : [
+                0,
+                0
+            ],
+            "radius" : 1,
+            "area" : 1
+        },
+        "1": {
+            "mass": 1,
+            "pos": [
+                10,
+                10
+            ],
+            "radius": 1,
+            "area": 1
+        },
+        "2": {
+            "mass": 2,
+            "pos": [
+                20,
+                20
+            ],
+            "radius": 2,
+            "area": 2
+        },
+        "3": {
+            "mass": 3,
+            "pos": [
+                30,
+                30
+            ],
+            "radius": 3,
+            "area": 3
+        },
+        "4": {
+            "mass": 4,
+            "pos": [
+                40,
+                40
+            ],
+            "radius": 4,
+            "area": 4
+        }
+    },
+    "forces" : [
+        {
+            "type" : "Gravity",
+            "particles" : [ "1", "2", "3", "4" ]
+        },
+        {
+            "type" : "SpringDamper",
+            "particles" : [
+                [ "Anchor", "1" ],
+                [ "1", "2" ],
+                [ "2", "3" ],
+                [ "3", "4" ]
+            ],
+            "springConstant" : 5,
+            "restLength" : 10,
+            "viscousDampingCoeff" : 1,
+            "maxForce" : 500
+        },
+        {
+            "type" : "Drag",
+            "particles" : [ "1", "2", "3", "4" ],
+            "flowFunc" : {
+                "type" : "ParticleTimeFunction",
+                "func" : {
+                    "type" : "SinWaveVector3DFunction",
+                    "offset" : [ 0.0, 0.0, 0.0 ],
+                    "amplitude" : [ 50.0, 0.0, 0.0 ],
+                    "frequency" : [ 0.25, 1.0, 1.0 ],
+                    "phase"     : [ ]
+                }
+            }
+        }
+    ],
+    "bounds" : {
+        "min": [ -200, -200, -200],
+        "max": [  200,  200,  200]
+    },
+    "dt" : 0.01,
+    "sleep" : 0.01
+}
