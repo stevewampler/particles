@@ -1,12 +1,14 @@
-package com.sgw.particles
+package com.sgw.particles.swing
 
-import java.awt.EventQueue
+import java.awt.{Color, EventQueue, Graphics2D}
+
+import com.sgw.particles.model.ParticleSystem
+
+import scala.swing.Panel
 import scala.swing.Swing._
-import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
-import java.awt.{Color, Graphics2D}
-import scala.swing.event.{MouseClicked, MouseReleased, MousePressed}
+import scala.swing.event.{MousePressed, MouseReleased}
 
-case class ParticleSystemView(particleSystem: ParticleSystem, dt: Double, sleep: Double = 0.01) extends Panel {
+case class ParticleSystemView(particleSystem: ParticleSystem) extends Panel {
   val modelBounds = particleSystem.bounds
   val width = 800
   val height = 800
@@ -62,7 +64,7 @@ case class ParticleSystemView(particleSystem: ParticleSystem, dt: Double, sleep:
         particle(t)
       })
       repaint()
-      t = t + dt
+      t = t + particleSystem.dt
     }
   }
 
@@ -70,10 +72,15 @@ case class ParticleSystemView(particleSystem: ParticleSystem, dt: Double, sleep:
     var paused = false
 
     def togglePaused() = this.synchronized {
-      if (paused) resumeSim() else pauseSim()
+      if (paused)
+        resumeSim()
+      else
+        pauseSim()
     }
 
-    def pauseSim() = this.synchronized { paused = true }
+    def pauseSim() = this.synchronized {
+      paused = true
+    }
 
     def resumeSim() = this.synchronized {
       paused = false
@@ -85,7 +92,7 @@ case class ParticleSystemView(particleSystem: ParticleSystem, dt: Double, sleep:
         EventQueue.invokeLater(runnable)
 
         try {
-          Thread.sleep((sleep * 1000L).toLong)
+          Thread.sleep((particleSystem.sleep * 1000L).toLong)
 
           this.synchronized {
             while (paused)

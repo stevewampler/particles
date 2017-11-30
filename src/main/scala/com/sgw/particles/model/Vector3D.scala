@@ -1,35 +1,32 @@
-package com.sgw.particles
+package com.sgw.particles.model
 
-/**
- * Created with IntelliJ IDEA.
- * User: swampler
- * Date: 4/4/13
- * Time: 8:03 PM
- * Copyright 2013: Steve Wampler
- */
+import play.api.libs.json.{Format, Json}
+
 object Vector3D {
-  def apply(list: List[Double]): Vector3D = list.size match {
-    case 0 => ZeroValue
-    case 1 => apply(list(0))
-    case 2 => apply(list(0), list(1))
-    case _ => apply(list(0), list(1), list(2))
-  }
-  def apply(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0): Vector3D = new Vector3D(x, y, z)
+  implicit val playFormat: Format[Vector3D] = Json.format[Vector3D]
+
+//  def apply(list: List[Double]): Vector3D = list.size match {
+//    case 0 => ZeroValue
+//    case 1 => apply(list(0))
+//    case 2 => apply(list(0), list(1))
+//    case _ => apply(list(0), list(1), list(2))
+//  }
+//  def apply(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0): Vector3D = new Vector3D(x, y, z)
 
   lazy val ZeroValue = Vector3D()
   lazy val MaxValue  = Vector3D(Double.MaxValue, Double.MaxValue, Double.MaxValue)
   lazy val MinValue  = Vector3D(Double.MinValue, Double.MinValue, Double.MinValue)
 }
 
-class Vector3D(val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0) extends IndexedSeq[Double] {
-  val length = 3
-
-  def apply(i: Int) = i match {
-    case 0 => x
-    case 1 => y
-    case 2 => z
-    case _ => throw new ArrayIndexOutOfBoundsException(i)
-  }
+case class Vector3D(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) {
+//  val length = 3
+//
+//  def apply(i: Int) = i match {
+//    case 0 => x
+//    case 1 => y
+//    case 2 => z
+//    case _ => throw new ArrayIndexOutOfBoundsException(i)
+//  }
 
   def len = Math.sqrt(x*x + y*y + z*z)
 
@@ -51,6 +48,14 @@ class Vector3D(val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0) ex
     if (vlen < 0.000001) Vector3D() else this / len
   }
 
+  def round: Vector3D = Vector3D(x.round, y.round, z.round)
+
+  def roundTo(decimalPlaces: Int): Vector3D = {
+    val s = Math.pow(10.0, decimalPlaces)
+
+    scale(s).round.scale(1.0/s)
+  }
+
   def projectOnTo(v2: Vector3D) = {
     val v2norm = v2.normalize
     v2norm * dot_product(v2norm)
@@ -63,5 +68,17 @@ class Vector3D(val x: Double = 0.0, val y: Double = 0.0, val z: Double = 0.0) ex
   def /(v2: Vector3D) = cross_product(v2.inverse)
   def *(s: Double)    = scale(s)
   def /(s: Double)    = scale(1.0/s)
+
+  override def toString: String = s"($x, $y, $z)"
+
+  def toString(decimals: Int): String = {
+    val formatter = s"%1.${decimals}f"
+
+    List(
+      formatter.format(x),
+      formatter.format(y),
+      formatter.format(z)
+    ).mkString("(", ",", ")")
+  }
 }
 

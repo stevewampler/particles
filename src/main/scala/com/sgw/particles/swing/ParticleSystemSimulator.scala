@@ -1,31 +1,55 @@
-package com.sgw.particles
+package com.sgw.particles.swing
 
-import scala.swing.{MainFrame, SimpleSwingApplication}
-import com.sgw.particles.factories.{SimpleParticleSystemFactory, PlanetaryParticleSystemFactory, BeamParticleSystemFactory}
+import com.sgw.particles.model.ParticleSystemFactory
 import com.sgw.particles.utils.Loggable
+import play.api.libs.json.{JsError, JsSuccess, Json}
+import twitter.scalding.Args
 
-/**
- * author: Steve Wampler
- */
+import scala.io.Source
+import scala.swing.{MainFrame, SimpleSwingApplication}
+
 object ParticleSystemSimulator extends SimpleSwingApplication with Loggable {
-  var psargs: ParticleSystemArgs = null // yeah, hack, might want to use an Option here
+  private var maybeParticleSystemFactory: Option[ParticleSystemFactory] = None
 
-  def top = new MainFrame {
-    title = "Particles"
-    contents = ParticleSystemView(
-      psargs.config.getString("type") match {
-        case Some(SimpleParticleSystemFactory.name)    => SimpleParticleSystemFactory(psargs.config)
-        case Some(BeamParticleSystemFactory.name)      => BeamParticleSystemFactory(psargs.config)
-        case Some(PlanetaryParticleSystemFactory.name) => PlanetaryParticleSystemFactory(psargs.config)
-        case _ => throw new RuntimeException("Unknown particle system type: " + psargs.config.getString("type"))
-      },
-      psargs.config.getDouble("dt").getOrElse(0.01),
-      psargs.config.getDouble("sleep").getOrElse(0.01)
+  def top = maybeParticleSystemFactory.map { particleSystemFactory =>
+    particleSystemFactory.createParticleSystem
+  }.map { particleSystem =>
+    new MainFrame() {
+      title = particleSystem.name
+      contents = ParticleSystemView(
+        particleSystem
+      )
+    }
+  }.getOrElse {
+    throw new RuntimeException(
+      "No particle system factory."
     )
   }
 
   override def startup(args: Array[String]) {
-    psargs = ParticleSystemArgs(args)
+    val psargs = Args(args)
+
+    maybeParticleSystemFactory = psargs.getURI("factory").map { factoryURI =>
+      if (factoryURI.isAbsolute)
+        factoryURI.toURL
+      else
+        getClass.getResource(factoryURI.getPath)
+    }.map(Source.fromURL).map { source =>
+      source.getLines().mkString("")
+    }.map { factoryJson =>
+      Json.fromJson[ParticleSystemFactory](Json.parse(factoryJson)) match {
+        case JsSuccess(particleSystemFactory, _) => particleSystemFactory
+        case JsError(errors) =>
+          val errorStrings = errors.map { case (path, validationErrors) =>
+            List(
+              s"  ${path.toString()}:",
+              validationErrors.map(_.toString).mkString("    ", "\n    ", "")
+            ).mkString("\n")
+          }
+          throw new RuntimeException(s"Failed to read a particle system factory.\n$errorStrings")
+      }
+    }
+
     super.startup(args)
   }
 }

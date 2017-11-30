@@ -1,89 +1,110 @@
 {
-    "type" : "Simple",
-    "particles" : {
-        "Anchor" : {
-            "mass" : 999999999,
-            "pos"  : [
-                0,
-                0
-            ],
-            "radius" : 1,
-            "area" : 1
+    "type": "SimpleParticleSystemFactory",
+    "name": "String",
+    "particles": [
+        {
+            "type": "Simple",
+            "id": 0,
+            "name": "Anchor",
+            "m" : 999999999
         },
-        "1": {
-            "mass": 1,
-            "pos": [
-                10,
-                10
-            ],
+        {
+            "type": "Simple",
+            "id": 1,
+            "m": 1,
+            "p": {
+                "x": 10,
+                "y": 10,
+                "z": 0
+            },
             "radius": 1,
             "area": 1
         },
-        "2": {
-            "mass": 2,
-            "pos": [
-                20,
-                20
-            ],
+        {
+            "type": "Simple",
+            "id": 2,
+            "m": 2,
+            "p": {
+                "x": 20,
+                "y": 20,
+                "z": 0
+            },
             "radius": 2,
             "area": 2
         },
-        "3": {
-            "mass": 3,
-            "pos": [
-                30,
-                30
-            ],
+        {
+            "type": "Simple",
+            "id": 3,
+            "m": 3,
+            "p": {
+                "x": 30,
+                "y": 30,
+                "z": 0
+            },
             "radius": 3,
             "area": 3
         },
-        "4": {
-            "mass": 4,
-            "pos": [
-                40,
-                40
-            ],
+        {
+            "type": "Simple",
+            "id": 4,
+            "m": 4,
+            "p": {
+                "x": 40,
+                "y": 40,
+                "z": 0
+            },
             "radius": 4,
             "area": 4
         }
-    },
-    "forces" : [
+    ],
+    "forces": [
         {
-            "type" : "Gravity",
-            "particles" : [ "1", "2", "3", "4" ]
+            "type": "Gravity",
+            "pIds": [  ]
         },
         {
-            "type" : "SpringDamper",
-            "particles" : [
-                [ "Anchor", "1" ],
-                [ "1", "2" ],
-                [ "2", "3" ],
-                [ "3", "4" ]
+            "type": "SpringDamper",
+            "pIds": [
+                [ 0, 1 ],
+                [ 1, 2 ],
+                [ 2, 3 ],
+                [ 3, 4 ]
             ],
-            "springConstant" : 5,
-            "restLength" : 10,
-            "viscousDampingCoeff" : 1,
-            "maxForce" : 500
+            "springConstant": 10,
+            "viscousDampingCoeff": 10,
+            "maxForce": 500
         },
         {
-            "type" : "Drag",
-            "particles" : [ "1", "2", "3", "4" ],
-            "flowFunc" : {
-                "type" : "ParticleTimeFunction",
-                "func" : {
-                    "type" : "SinWaveVector3DFunction",
-                    "offset" : [ 0.0, 0.0, 0.0 ],
-                    "amplitude" : [ 50.0, 0.0, 0.0 ],
-                    "frequency" : [ 0.25, 1.0, 1.0 ],
-                    "phase"     : [ ]
+            "type": "Drag",
+            "pIds": [ 1, 2, 3, 4 ],
+            "flowFunc": {
+                "type": "ParticleTimeFunction",
+                "func": {
+                    "type": "SinWaveVector3DFunction",
+                    "offset": {
+                        "x": 10,
+                        "y": 5,
+                        "z": 0
+                    },
+                    "amplitude" : {
+                        "x": 10,
+                        "y": 10,
+                        "z": 0
+                    },
+                    "frequency" : {
+                        "x": 0.025,
+                        "y": 0.010,
+                        "z": 0.0
+                    },
+                    "phase": {
+                        "x": 1,
+                        "y": 5,
+                        "z": 0
+                    }
                 }
             }
         }
     ],
-    "bounds" : {
-        "min": [ -200, -200, -200],
-        "max": [  200,  200,  200]
-    },
-    "dt" : 0.01,
-    "sleep" : 0.01
+    "dt": 0.01,
+    "sleep": 0.001
 }

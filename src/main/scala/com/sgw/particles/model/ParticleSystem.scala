@@ -1,4 +1,4 @@
-package com.sgw.particles
+package com.sgw.particles.model
 
 /*
   TODO:
@@ -27,5 +27,12 @@ package com.sgw.particles
     a particle or force.
  */
 
-case class ParticleSystem(particles: Seq[Particle], forces: Seq[Force], bounds: Bounds3D)
+case class ParticleSystem(
+  name: String,
+  particles: Seq[Particle],
+  forces: Seq[Force],
+  bounds: Bounds3D,
+  dt: Double = 0.01,
+  sleep: Double = 0.01
+)
 

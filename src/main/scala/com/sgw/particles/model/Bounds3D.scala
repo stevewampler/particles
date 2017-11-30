@@ -1,13 +1,9 @@
-package com.sgw.particles
+package com.sgw.particles.model
 
-import com.sgw.particles.utils.JSON
+import play.api.libs.json.{Format, Json}
 
 object Bounds3D {
-  def apply(config: JSON): Bounds3D =
-    Bounds3D(
-      config.getVector3D("min").getOrElse(Vector3D.MinValue),
-      config.getVector3D("max").getOrElse(Vector3D.MaxValue)
-    )
+  implicit val playFormat: Format[Bounds3D] = Json.format[Bounds3D]
 }
 
 case class Bounds3D(min: Vector3D, max: Vector3D) {

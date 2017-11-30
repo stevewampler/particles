@@ -3,7 +3,7 @@ package com.sgw.particles.utils
 // import org.slf4j.LoggerFactory
 
 /**
- * A mix-in trait used to give a class the ability to log stuff using simple function.
+ * A mix-in trait used to give a class the ability to log stuff.
  * To use it, do this
  * <pre>
  *   class MyClass extends SomethingElse with Loggable {

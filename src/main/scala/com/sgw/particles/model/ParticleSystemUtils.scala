@@ -1,8 +1,5 @@
-package com.sgw.particles
+package com.sgw.particles.model
 
-/**
- * author: steve
- */
 object ParticleSystemUtils {
   def bounds(particles: Seq[Particle]): Bounds3D = {
     val minMax: Pair[Vector3D, Vector3D] = particles.map(_.p).foldLeft(Pair(Vector3D.MaxValue, Vector3D.MinValue))((result: Pair[Vector3D, Vector3D], p: Vector3D) => {

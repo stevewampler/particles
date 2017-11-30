@@ -1,11 +1,10 @@
-package com.sgw.particles
+package com.sgw.particles.swing
 
+import java.awt.geom.{Ellipse2D, Line2D}
 import java.awt.{Color, Graphics2D}
-import java.awt.geom.{Line2D, Ellipse2D}
 
-/**
- * author: steve
- */
+import com.sgw.particles.model._
+
 trait Renderer {
   def render(g: Graphics2D, bounds: Bounds3D): Unit
 }
@@ -25,9 +24,11 @@ object Renderer {
 }
 
 object RendererUtils {
+  val BLACK = new Color(0, 0, 0)
+
   def calcScale(width: Int, height: Int, bounds: Bounds3D) = width.min(height) / bounds.width
 
-  def getForceColor(force: Force) = {
+  def getForceColor(force: Force): Color = {
     val forceMag = force.force.len
     val stress = (forceMag / force.maxForce).min(1.0)
     // stress 0-50 green to yellow (G+R), 50-100 yellow to red
@@ -37,13 +38,33 @@ object RendererUtils {
     new Color(red, grn, blu)
   }
 
-  def drawForce(g: Graphics2D, force: Force, p1: Vector3D, p2: Vector3D, bounds: Bounds3D) {
+  def drawForce(g: Graphics2D, force: Force, p1: Vector3D, p2: Vector3D, bounds: Bounds3D): Unit = {
     if (force.broken) return
     val width = g.getClipBounds.width
     val height = g.getClipBounds.height
     val scale = calcScale(width, height, bounds)
     g.setColor(getForceColor(force))
-    g.draw(new Line2D.Double(p1.x * scale + width / 2.0, -p1.y * scale + height / 2.0, p2.x * scale + width / 2.0, -p2.y * scale + height / 2.0))
+    g.draw(
+      new Line2D.Double(
+        p1.x * scale + width / 2.0,
+        -p1.y * scale + height / 2.0,
+        p2.x * scale + width / 2.0,
+        -p2.y * scale + height / 2.0
+      )
+    )
+  }
+
+  def drawVector3DAsText(g: Graphics2D, pos: Vector3D, value: Vector3D, bounds: Bounds3D): Unit = {
+    g.setColor(BLACK)
+    val width = g.getClipBounds.width
+    val height = g.getClipBounds.height
+    val scale = calcScale(width, height, bounds)
+    val roundedValue = value.roundTo(2)
+    g.drawString(
+      value.toString(2),
+      (pos.x * scale + width / 2.0 + 2).toInt,
+      (-pos.y * scale + height / 2.0).toInt
+    )
   }
 }
 
@@ -64,7 +85,19 @@ case class ParticleRenderer(particle: Particle) extends Renderer {
 }
 
 case class GravityRenderer(gravity: Gravity) extends Renderer {
-  def render(g: Graphics2D, bounds: Bounds3D) = RendererUtils.drawForce(g, gravity, gravity.p.p, gravity.p.p - gravity.force, bounds)
+  def render(g: Graphics2D, bounds: Bounds3D) = {
+    val p1 = gravity.p.p
+    val p2 = gravity.p.p + gravity.force
+
+    RendererUtils.drawForce(g, gravity, p1, p2, bounds)
+
+//    RendererUtils.drawVector3DAsText(
+//      g = g,
+//      pos = p2,
+//      value = gravity.force,
+//      bounds = bounds
+//    )
+  }
 }
 
 case class SpringRenderer(spring: Spring) extends Renderer {
@@ -84,7 +117,19 @@ case class SpringDamperRenderer(springDamper: SpringDamper) extends Renderer {
 }
 
 case class DragRenderer(drag: Drag) extends Renderer {
-  def render(g: Graphics2D, bounds: Bounds3D) = RendererUtils.drawForce(g, drag, drag.p.p, drag.p.p - drag.force, bounds)
+  def render(g: Graphics2D, bounds: Bounds3D) = {
+    val p1 = drag.p.p
+    val p2 = drag.p.p + drag.force
+
+    RendererUtils.drawForce(g, drag, p1, p2, bounds)
+
+//    RendererUtils.drawVector3DAsText(
+//      g = g,
+//      pos = p2,
+//      value = drag.force,
+//      bounds = bounds
+//    )
+  }
 }
 
 case class ConstantForceRenderer(constant: ConstantForce) extends Renderer {
