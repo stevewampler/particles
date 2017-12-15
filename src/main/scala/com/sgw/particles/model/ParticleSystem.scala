@@ -33,9 +33,7 @@ object ParticleSystem {
     name: String,
     particleFactories: List[ParticleFactory],
     forceFactories: List[ForceFactory],
-    maybeBounds: Option[Bounds3D],
-    dt: Double,
-    sleep: Double
+    maybeBounds: Option[Bounds3D]
   ): ParticleSystem = {
     val particles = particleFactories.foldLeft(List[Particle]()) { case (acc, particleFactory) =>
       acc ++ particleFactory.createParticles
@@ -53,9 +51,7 @@ object ParticleSystem {
       name,
       particles,
       forces,
-      maybeBounds,
-      dt,
-      sleep
+      maybeBounds
     )
   }
 
@@ -63,9 +59,7 @@ object ParticleSystem {
     name: String,
     particles: List[Particle],
     forces: List[Force],
-    maybeBounds: Option[Bounds3D],
-    dt: Double,
-    sleep: Double
+    maybeBounds: Option[Bounds3D]
   ): ParticleSystem = {
     val particleMap = particles.map { particle =>
       particle.id -> particle
@@ -81,9 +75,7 @@ object ParticleSystem {
       forceMap,
       maybeBounds.getOrElse(
         ParticleSystemUtils.bounds(particles) * 10
-      ),
-      dt,
-      sleep
+      )
     )
   }
 }
@@ -92,9 +84,7 @@ case class ParticleSystem(
   name: String,
   particleMap: Map[Particle.ID, Particle],
   forceMap: Map[Force.ID, Force],
-  bounds: Bounds3D,
-  dt: Double,
-  sleep: Double
+  bounds: Bounds3D
 ) {
   def apply(dt: Double): ParticleSystem = applyForces(dt).moveParticles(dt)
 

@@ -44,9 +44,7 @@ case class SimpleParticleSystemFactory(
   name: String,
   particles: List[ParticleFactory],
   forces: List[ForceFactory],
-  bounds: Option[Bounds3D],
-  dt: Option[Double],
-  sleep: Option[Double]
+  bounds: Option[Bounds3D]
 ) extends ParticleSystemFactory {
 
   def createParticleSystem: ParticleSystem =
@@ -54,9 +52,7 @@ case class SimpleParticleSystemFactory(
       name = name,
       particleFactories = particles,
       forceFactories = forces,
-      maybeBounds = bounds,
-      dt = dt.getOrElse(0.01),
-      sleep = sleep.getOrElse(0.01)
+      maybeBounds = bounds
     )
 }
 
@@ -82,9 +78,7 @@ case class BeamParticleSystemFactory(
   dampingCoeff: Option[Double],
   maxForce: Option[Double],
   fluidDensity: Option[Double],
-  dragCoeff: Option[Double],
-  dt: Option[Double],
-  sleep: Option[Double]
+  dragCoeff: Option[Double]
 ) extends ParticleSystemFactory {
   private def anchorFilter(
     row: Integer,
@@ -111,9 +105,7 @@ case class BeamParticleSystemFactory(
       dampingCoeff = dampingCoeff.getOrElse(20.0),
       maxForce = maxForce.getOrElse(10000),
       fluidDensity = fluidDensity.getOrElse(0.5),
-      dragCoeff = dragCoeff.getOrElse(0.47),
-      dt = dt.getOrElse(0.01),
-      sleep = sleep.getOrElse(0.0)
+      dragCoeff = dragCoeff.getOrElse(0.47)
     )
 
   private def createParticleSystem(
@@ -126,9 +118,7 @@ case class BeamParticleSystemFactory(
     dampingCoeff: Double = 100.0,
     maxForce: Double = 500,
     fluidDensity: Double = 0.5,
-    dragCoeff: Double = 0.47,
-    dt: Double = 0.01,
-    sleep: Double = 0.01
+    dragCoeff: Double = 0.47
   ): ParticleSystem = {
     val particleMatrix: Seq[Seq[Particle]] =
       (0 until numRows).map { row =>
@@ -298,9 +288,7 @@ case class BeamParticleSystemFactory(
       name = name,
       particles,
       forces,
-      Some(bounds),
-      dt,
-      sleep
+      Some(bounds)
     )
   }
 }
@@ -320,9 +308,7 @@ object PlanetaryParticleSystemFactory {
 // Mass of Moon: 7.34767309E22 kilograms
 // Distance of Earth to Moon: 384,400 km
 case class PlanetaryParticleSystemFactory(
-  name: String,
-  dt: Double = 86400.0,
-  sleep: Double = 0.01
+  name: String
 ) extends ParticleSystemFactory {
   private def createParticle(
     id: Particle.ID,
@@ -381,9 +367,7 @@ case class PlanetaryParticleSystemFactory(
       name = name,
       solarSystem,
       forces,
-      Some(bounds),
-      dt = dt,
-      sleep = sleep
+      Some(bounds)
     )
   }
 }

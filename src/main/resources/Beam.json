@@ -1,13 +1,15 @@
 {
+  "type": "ParticleSystemView",
+  "particleSystemFactory": {
     "type": "BeamParticleSystemFactory",
     "name": "Beam",
-    "numRows": 4,
+    "numRows": 5,
     "numCols": 10,
     "spread": 100.0,
     "m": 1.0,
     "springConst": 100.0,
     "dampingCoeff": 20.0,
-    "maxForce": 10000,
-    "dt": 0.01,
-    "sleep": 0.01
+    "maxForce": 10000
+  },
+  "dt": 0.01
 }

@@ -9,36 +9,32 @@ import scala.io.Source
 import scala.swing.{MainFrame, SimpleSwingApplication}
 
 object ParticleSystemSimulator extends SimpleSwingApplication with Loggable {
-  private var maybeParticleSystemFactory: Option[ParticleSystemFactory] = None
+  private var maybeParticleSystemView: Option[ParticleSystemView] = None
 
-  def top = maybeParticleSystemFactory.map { particleSystemFactory =>
-    particleSystemFactory.createParticleSystem
-  }.map { particleSystem =>
+  def top = maybeParticleSystemView.map { particleSystemView =>
     new MainFrame() {
-      title = particleSystem.name
-      contents = ParticleSystemView(
-        particleSystem
-      )
+      title = particleSystemView.particleSystemName
+      contents = particleSystemView
     }
   }.getOrElse {
     throw new RuntimeException(
-      "No particle system factory."
+      "No particle system view."
     )
   }
 
   override def startup(args: Array[String]) {
     val psargs = Args(args)
 
-    maybeParticleSystemFactory = psargs.getURI("factory").map { factoryURI =>
-      if (factoryURI.isAbsolute)
-        factoryURI.toURL
+    maybeParticleSystemView = psargs.getURI("file").map { uri =>
+      if (uri.isAbsolute)
+        uri.toURL
       else
-        getClass.getResource(factoryURI.getPath)
+        getClass.getResource(uri.getPath)
     }.map(Source.fromURL).map { source =>
       source.getLines().mkString("")
-    }.map { factoryJson =>
-      Json.fromJson[ParticleSystemFactory](Json.parse(factoryJson)) match {
-        case JsSuccess(particleSystemFactory, _) => particleSystemFactory
+    }.map { json =>
+      Json.fromJson[ParticleSystemView](Json.parse(json)) match {
+        case JsSuccess(particleSystemView, _) => particleSystemView
         case JsError(errors) =>
           val errorStrings = errors.map { case (path, validationErrors) =>
             List(
@@ -46,7 +42,7 @@ object ParticleSystemSimulator extends SimpleSwingApplication with Loggable {
               validationErrors.map(_.toString).mkString("    ", "\n    ", "")
             ).mkString("\n")
           }
-          throw new RuntimeException(s"Failed to read a particle system factory.\n$errorStrings")
+          throw new RuntimeException(s"Failed to read a particle system view.\n$errorStrings")
       }
     }
 

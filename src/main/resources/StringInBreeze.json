@@ -1,170 +1,205 @@
 {
+  "type": "ParticleSystemView",
+  "particleSystemFactory": {
     "type": "SimpleParticleSystemFactory",
     "name": "String",
     "particles": [
-        {
-            "type": "Simple",
-            "id": 0,
-            "name": "Anchor",
-            "m" : 999999999
+      {
+        "type": "Simple",
+        "id": 0,
+        "name": "Anchor",
+        "m": 999999999
+      },
+      {
+        "type": "Simple",
+        "id": 1,
+        "m": 1,
+        "p": {
+          "x": 10,
+          "y": 10,
+          "z": 0
         },
-        {
-            "type": "Simple",
-            "id": 1,
-            "m": 1,
-            "p": {
-                "x": 10,
-                "y": 10,
-                "z": 0
-            },
-            "radius": 1,
-            "area": 1
+        "radius": 1,
+        "area": 1
+      },
+      {
+        "type": "Simple",
+        "id": 2,
+        "m": 1,
+        "p": {
+          "x": 20,
+          "y": 20,
+          "z": 0
         },
-        {
-            "type": "Simple",
-            "id": 2,
-            "m": 1,
-            "p": {
-                "x": 20,
-                "y": 20,
-                "z": 0
-            },
-            "radius": 1,
-            "area": 1
+        "radius": 1,
+        "area": 1
+      },
+      {
+        "type": "Simple",
+        "id": 3,
+        "m": 1,
+        "p": {
+          "x": 30,
+          "y": 30,
+          "z": 0
         },
-        {
-            "type": "Simple",
-            "id": 3,
-            "m": 1,
-            "p": {
-                "x": 30,
-                "y": 30,
-                "z": 0
-            },
-            "radius": 1,
-            "area": 1
+        "radius": 1,
+        "area": 1
+      },
+      {
+        "type": "Simple",
+        "id": 4,
+        "m": 1,
+        "p": {
+          "x": 40,
+          "y": 40,
+          "z": 0
         },
-        {
-            "type": "Simple",
-            "id": 4,
-            "m": 1,
-            "p": {
-                "x": 40,
-                "y": 40,
-                "z": 0
-            },
-            "radius": 1,
-            "area": 1
+        "radius": 1,
+        "area": 1
+      },
+      {
+        "type": "Simple",
+        "id": 5,
+        "m": 1,
+        "p": {
+          "x": 50,
+          "y": 50,
+          "z": 0
         },
-        {
-            "type": "Simple",
-            "id": 5,
-            "m": 1,
-            "p": {
-                "x": 50,
-                "y": 50,
-                "z": 0
-            },
-            "radius": 1,
-            "area": 1
+        "radius": 1,
+        "area": 1
+      },
+      {
+        "type": "Simple",
+        "id": 6,
+        "m": 1,
+        "p": {
+          "x": 60,
+          "y": 60,
+          "z": 0
         },
-        {
-            "type": "Simple",
-            "id": 6,
-            "m": 1,
-            "p": {
-                "x": 60,
-                "y": 60,
-                "z": 0
-            },
-            "radius": 1,
-            "area": 1
+        "radius": 1,
+        "area": 1
+      },
+      {
+        "type": "Simple",
+        "id": 7,
+        "m": 1,
+        "p": {
+          "x": 70,
+          "y": 70,
+          "z": 0
         },
-        {
-            "type": "Simple",
-            "id": 7,
-            "m": 1,
-            "p": {
-                "x": 70,
-                "y": 70,
-                "z": 0
-            },
-            "radius": 1,
-            "area": 1
+        "radius": 1,
+        "area": 1
+      },
+      {
+        "type": "Simple",
+        "id": 8,
+        "m": 1,
+        "p": {
+          "x": 80,
+          "y": 80,
+          "z": 0
         },
-        {
-            "type": "Simple",
-            "id": 8,
-            "m": 1,
-            "p": {
-                "x": 80,
-                "y": 80,
-                "z": 0
-            },
-            "radius": 1,
-            "area": 1
-        }
+        "radius": 1,
+        "area": 1
+      }
     ],
     "forces": [
-        {
-            "type": "Gravity",
-            "pIds": [ 1, 2, 3, 4, 5, 6, 7, 8 ]
-        },
-        {
-            "type": "SpringDamper",
-            "pIds": [
-                [ 0, 1 ],
-                [ 1, 2 ],
-                [ 2, 3 ],
-                [ 3, 4 ],
-                [ 4, 5 ],
-                [ 5, 6 ],
-                [ 6, 7 ],
-                [ 7, 8 ]
-            ],
-            "springConstant": 100,
-            "maxSpringForce": 100000
-        },
-        {
-            "type": "Drag",
-            "pIds": [
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8
-            ],
-            "flowFunc": {
-                "type": "ParticleTimeFunction",
-                "func": {
-                    "type": "SinWaveVector3DFunction",
-                    "offset": {
-                        "x": 10,
-                        "y": 5,
-                        "z": 0
-                    },
-                    "amplitude": {
-                        "x": 10,
-                        "y": 10,
-                        "z": 0
-                    },
-                    "frequency": {
-                        "x": 0.025,
-                        "y": 0.010,
-                        "z": 0.0
-                    },
-                    "phase": {
-                        "x": 1,
-                        "y": 5,
-                        "z": 0
-                    }
-                }
+      {
+        "type": "Gravity",
+        "pIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      {
+        "type": "SpringDamper",
+        "pIds": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            5,
+            6
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            7,
+            8
+          ]
+        ],
+        "springConstant": 100,
+        "maxSpringForce": 100000
+      },
+      {
+        "type": "Drag",
+        "pIds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "flowFunc": {
+          "type": "ParticleTimeFunction",
+          "func": {
+            "type": "SinWaveVector3DFunction",
+            "offset": {
+              "x": 10,
+              "y": 5,
+              "z": 0
+            },
+            "amplitude": {
+              "x": 10,
+              "y": 10,
+              "z": 0
+            },
+            "frequency": {
+              "x": 0.025,
+              "y": 0.010,
+              "z": 0.0
+            },
+            "phase": {
+              "x": 1,
+              "y": 5,
+              "z": 0
             }
+          }
         }
-    ],
-    "dt": 0.01,
-    "sleep": 0.0
+      }
+    ]
+  },
+  "dt": 0.01
 }

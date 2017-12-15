@@ -1,6 +1,8 @@
 {
-    "type" : "PlanetaryParticleSystemFactory",
-    "name" : "Planets",
-    "dt" : 86400.0,
-    "sleep" : 0.1
+  "type": "ParticleSystemView",
+  "particleSystemFactory": {
+    "type": "PlanetaryParticleSystemFactory",
+    "name": "Planets"
+  },
+  "dt": 86400.0
 }
