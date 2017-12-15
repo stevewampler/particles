@@ -37,24 +37,28 @@ object SimpleParticleFactory {
 case class SimpleParticleFactory(
   id: Particle.ID,
   name: Option[String],
-  var m: Option[Double],
-  var p: Option[Vector3D],
-  var v: Option[Vector3D],
-  var a: Option[Vector3D],
-  var t: Option[Double],
-  var radius: Option[Double],
-  var age: Option[Double],
-  var area: Option[Double]
+  m: Option[Double],
+  p: Option[Vector3D],
+  v: Option[Vector3D],
+  a: Option[Vector3D],
+  f: Option[Vector3D],
+  t: Option[Double],
+  radius: Option[Double],
+  age: Option[Double],
+  area: Option[Double]
 ) extends ParticleFactory {
   def createParticles: List[Particle] = List(
     Particle(
       id = id,
       name = name.getOrElse(id.toString),
-      m = m.getOrElse(1.0),
-      p = p.getOrElse(Vector3D()),
-      v = v.getOrElse(Vector3D()),
-      a = a.getOrElse(Vector3D()),
       t = t.getOrElse(0.0),
+      m = m.getOrElse(1.0),
+      p = p.getOrElse(Vector3D.ZeroValue),
+      v = v.getOrElse(Vector3D.ZeroValue),
+      a = a.getOrElse(Vector3D.ZeroValue),
+      f = f.getOrElse(Vector3D.ZeroValue),
+      m1 = m.getOrElse(1.0),
+      f1 = f.getOrElse(Vector3D.ZeroValue),
       radius = radius.getOrElse(1.0),
       age = age.getOrElse(0.0),
       area = area.getOrElse(1.0)
@@ -69,42 +73,58 @@ object Particle {
 case class Particle(
   id: Particle.ID,
   name: String,
-  var m: Double,
-  var p: Vector3D,
-  var v: Vector3D,
-  var a: Vector3D,
-  var t: Double,
-  var radius: Double,
-  var age: Double,
-  var area: Double
+  t: Double,
+  m: Double,
+  p: Vector3D,
+  v: Vector3D,
+  a: Vector3D,
+  f: Vector3D,
+  m1: Double,
+  f1: Vector3D,
+  radius: Double,
+  age: Double,
+  area: Double
 ) {
-  var pLast = Vector3D()
-  var vLast = Vector3D()
-  var aLast = Vector3D()
-  var tLast = 0.0
+  /**
+    * Applies the specified time delta to this particle, currently at time t0, and returns a new particle system
+    * containing the new particle at time t1.
+    *
+    * @param pSys the particle system to which this particle belongs
+    * @param dt the time delta
+    *
+    * @return a new ParticleSystem containing a copy of this particle at time t1
+    */
+  def apply(pSys: ParticleSystem)(dt: Double): ParticleSystem = {
+    val t1 = t + dt
 
-  def next = {
-    pLast = p
-    vLast = v
-    aLast = a
-    tLast = t
-    a = Vector3D.ZeroValue
-  }
-
-  def apply(t: Double) = {
-    val dt = t - this.t
-
-    if (m != Double.MaxValue) {
-      v = v + (aLast + a) / 2.0 * dt
-      p = p + (vLast + v) / 2.0 * dt
+    val a1 = if (m != Double.MaxValue) {
+      (f + f1) / 2.0 / (m + m1) / 2.0
+//      f1 / m1
+    } else {
+      a
     }
 
-    this.t = t
+    val v1 = v + (a + a1) / 2.0 * dt
+    val p1 = p + (v + v1) / 2.0 * dt
 
-    age = age + dt
+    pSys.copy(
+      particleMap = pSys.particleMap.updated(
+        id,
+        copy(
+          t = t1,
+          m = m1,
+          p = p1,
+          v = v1,
+          a = a1,
+          f = f1,
+          f1 = Vector3D.ZeroValue,
+          age = age + dt
+        )
+      )
+    )
   }
 
-  def speed = v.len
+  def speed: Double = v.len
 
   def distance(p2: Particle): Double = (p2.p - p).len
 }

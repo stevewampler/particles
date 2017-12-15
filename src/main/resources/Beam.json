@@ -5,9 +5,9 @@
     "numCols": 10,
     "spread": 100.0,
     "m": 1.0,
-    "springConst": 50.0,
-    "dampingCoeff": 10.0,
-    "maxForce": 500,
+    "springConst": 100.0,
+    "dampingCoeff": 20.0,
+    "maxForce": 10000,
     "dt": 0.01,
     "sleep": 0.01
 }

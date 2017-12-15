@@ -23,44 +23,92 @@
         {
             "type": "Simple",
             "id": 2,
-            "m": 2,
+            "m": 1,
             "p": {
                 "x": 20,
                 "y": 20,
                 "z": 0
             },
-            "radius": 2,
-            "area": 2
+            "radius": 1,
+            "area": 1
         },
         {
             "type": "Simple",
             "id": 3,
-            "m": 3,
+            "m": 1,
             "p": {
                 "x": 30,
                 "y": 30,
                 "z": 0
             },
-            "radius": 3,
-            "area": 3
+            "radius": 1,
+            "area": 1
         },
         {
             "type": "Simple",
             "id": 4,
-            "m": 4,
+            "m": 1,
             "p": {
                 "x": 40,
                 "y": 40,
                 "z": 0
             },
-            "radius": 4,
-            "area": 4
+            "radius": 1,
+            "area": 1
+        },
+        {
+            "type": "Simple",
+            "id": 5,
+            "m": 1,
+            "p": {
+                "x": 50,
+                "y": 50,
+                "z": 0
+            },
+            "radius": 1,
+            "area": 1
+        },
+        {
+            "type": "Simple",
+            "id": 6,
+            "m": 1,
+            "p": {
+                "x": 60,
+                "y": 60,
+                "z": 0
+            },
+            "radius": 1,
+            "area": 1
+        },
+        {
+            "type": "Simple",
+            "id": 7,
+            "m": 1,
+            "p": {
+                "x": 70,
+                "y": 70,
+                "z": 0
+            },
+            "radius": 1,
+            "area": 1
+        },
+        {
+            "type": "Simple",
+            "id": 8,
+            "m": 1,
+            "p": {
+                "x": 80,
+                "y": 80,
+                "z": 0
+            },
+            "radius": 1,
+            "area": 1
         }
     ],
     "forces": [
         {
             "type": "Gravity",
-            "pIds": [  ]
+            "pIds": [ 1, 2, 3, 4, 5, 6, 7, 8 ]
         },
         {
             "type": "SpringDamper",
@@ -68,15 +116,27 @@
                 [ 0, 1 ],
                 [ 1, 2 ],
                 [ 2, 3 ],
-                [ 3, 4 ]
+                [ 3, 4 ],
+                [ 4, 5 ],
+                [ 5, 6 ],
+                [ 6, 7 ],
+                [ 7, 8 ]
             ],
-            "springConstant": 10,
-            "viscousDampingCoeff": 10,
-            "maxForce": 500
+            "springConstant": 100,
+            "maxSpringForce": 100000
         },
         {
             "type": "Drag",
-            "pIds": [ 1, 2, 3, 4 ],
+            "pIds": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+            ],
             "flowFunc": {
                 "type": "ParticleTimeFunction",
                 "func": {
@@ -86,12 +146,12 @@
                         "y": 5,
                         "z": 0
                     },
-                    "amplitude" : {
+                    "amplitude": {
                         "x": 10,
                         "y": 10,
                         "z": 0
                     },
-                    "frequency" : {
+                    "frequency": {
                         "x": 0.025,
                         "y": 0.010,
                         "z": 0.0
@@ -106,5 +166,5 @@
         }
     ],
     "dt": 0.01,
-    "sleep": 0.001
+    "sleep": 0.0
 }

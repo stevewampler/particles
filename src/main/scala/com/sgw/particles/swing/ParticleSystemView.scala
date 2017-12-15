@@ -8,10 +8,11 @@ import scala.swing.Panel
 import scala.swing.Swing._
 import scala.swing.event.{MousePressed, MouseReleased}
 
-case class ParticleSystemView(particleSystem: ParticleSystem) extends Panel {
-  val modelBounds = particleSystem.bounds
-  val width = 800
-  val height = 800
+case class ParticleSystemView(initialParticleSystem: ParticleSystem) extends Panel {
+  private var pSys = initialParticleSystem
+  private val modelBounds = initialParticleSystem.bounds
+  private val width = 800
+  private val height = 800
 
   background = Color.white
   preferredSize = (width, height)
@@ -46,25 +47,29 @@ case class ParticleSystemView(particleSystem: ParticleSystem) extends Panel {
 
   override def paintComponent(g: Graphics2D) = {
     super.paintComponent(g)
-    renderers.foreach(renderer => renderer.render(g, modelBounds))
+
+    pSys.forceMap.values.foreach { force =>
+      ForceRenderer.render(
+        g,
+        pSys,
+        force
+      )
+    }
+
+    pSys.particleMap.values.foreach { particle =>
+      ParticleRenderer.render(
+        g,
+        pSys,
+        particle
+      )
+    }
   }
 
-  val renderers = (particleSystem.particles ++ particleSystem.forces).map(obj => Renderer(obj))
-
   val runnable = new Runnable() {
-    var t = 0.0
     def run() {
-      particleSystem.particles.foreach(particle => {
-        particle.next
-      })
-      particleSystem.forces.foreach(force => {
-        force.apply
-      })
-      particleSystem.particles.foreach(particle => {
-        particle(t)
-      })
+      pSys = pSys(pSys.dt)
+
       repaint()
-      t = t + particleSystem.dt
     }
   }
 
@@ -89,10 +94,16 @@ case class ParticleSystemView(particleSystem: ParticleSystem) extends Panel {
 
     override def run() {
       while (true) {
-        EventQueue.invokeLater(runnable)
+//        EventQueue.invokeLater(runnable)
+
+//        val startTime = System.currentTimeMillis()
+        EventQueue.invokeAndWait(runnable)
+//        val endTime = System.currentTimeMillis()
+
+//        println(endTime - startTime)
 
         try {
-          Thread.sleep((particleSystem.sleep * 1000L).toLong)
+          Thread.sleep((pSys.sleep * 1000L).toLong)
 
           this.synchronized {
             while (paused)

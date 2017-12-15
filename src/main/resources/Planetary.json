@@ -2,5 +2,5 @@
     "type" : "PlanetaryParticleSystemFactory",
     "name" : "Planets",
     "dt" : 86400.0,
-    "sleep" : 0.01
+    "sleep" : 0.1
 }

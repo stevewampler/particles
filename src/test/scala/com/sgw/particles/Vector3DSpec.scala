@@ -41,6 +41,11 @@ class Vector3DSpec extends FunSuite with Matchers {
     v3.x should be (-0.33333 +- 0.00001)
     v3.y should be (-0.33333 +- 0.00001)
     v3.z should be (-0.33333 +- 0.00001)
+
+    val v4 = Vector3D(-1.0, 1.0, 0.0).projectOnTo(Vector3D(2.0, 1.0, 0.0))
+    v4.x should be (-0.39999 +- 0.00001)
+    v4.y should be (-0.19999 +- 0.00001)
+    v4.z should be (-0.00000 +- 0.00001)
   }
 
   test("Rounding a Vector3D should round every element of the vector.") {
