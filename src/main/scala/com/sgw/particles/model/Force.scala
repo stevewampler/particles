@@ -4,15 +4,6 @@ import java.util.concurrent.atomic.AtomicLong
 
 import play.api.libs.json._
 
-/*
-  TODO:
-
-  - FunctionForce
-    - Takes a function for both the magnitude and direction of the force
-  - RotatingVectorFunction(m: Double = 1.0, b: Double = 0.0) - apply(x: Double) = { y = m * x + b; Vector3D(Math.cos(y), Math.sin(y), 0.0) }
-  - Collision
- */
-
 object ForceFactory {
   implicit def playFormat: Format[ForceFactory] = new Format[ForceFactory] {
 

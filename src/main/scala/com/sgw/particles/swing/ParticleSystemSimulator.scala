@@ -1,6 +1,5 @@
 package com.sgw.particles.swing
 
-import com.sgw.particles.model.ParticleSystemFactory
 import com.sgw.particles.utils.Loggable
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import twitter.scalding.Args
@@ -49,37 +48,3 @@ object ParticleSystemSimulator extends SimpleSwingApplication with Loggable {
     super.startup(args)
   }
 }
-
-//        case 1 => { // beam
-//          val i = 0
-//          def anchorFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) =  ((col == 0 || col == numCols - 1))
-//          def particleFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) = true
-//          BeamParticleSystemFactory.createParticleSystem(
-//            numRows = 3,
-//            numCols = 10,
-//            spread  = 30,
-//            anchorFilter = anchorFilter,
-//            particleFilter = particleFilter,
-//            springConst  = Array( 500, 5000, 2000, 1000, 1000)(i),
-//            dampingCoeff = Array( 150,  200,  500,  500,  200)(i),
-//            maxForce     = Array(1000, 3000, 1000, 1000,  900)(i)
-//          )
-//        }
-//        case 2 => { // bridge
-//          val i = 1
-//          def anchorFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) =  (row == 0 && (col == 0 || col == numCols - 1))
-//          def particleFilter(row: Integer, numRows: Integer, col: Integer, numCols: Integer) = col >= row && (numCols - col - 1) >= row
-//          BeamParticleSystemFactory.createParticleSystem(
-//            numRows = 3,
-//            numCols = 10,
-//            spread  = 30,
-//            anchorFilter = anchorFilter,
-//            particleFilter = particleFilter,
-//            springConst  = Array(1000, 5000, 2000, 1000, 1000)(i),
-//            dampingCoeff = Array( 200,  200,  500,  500,  200)(i),
-//            maxForce     = Array(10000, 3000, 1000, 1000,  900)(i)
-//          )
-//        }
-//        case 3 => { // planets
-//          PlanetaryParticleSystemFactory.createParticleSystem()
-//        }

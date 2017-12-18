@@ -14,14 +14,6 @@ case object ForceRenderer extends Renderer[Force] {
   def render(g: Graphics2D, pSys: ParticleSystem, force: Force): Unit = force match {
     case force1: Force1 => Force1Renderer.render(g, pSys, force1)
     case force2: Force2 => Force2Renderer.render(g, pSys, force2)
-//    case gravity: Gravity => GravityRenderer(gravity)
-//    case gravitationalForce: GravitationalForce => GravitationalForceRenderer(gravitationalForce)
-//    case spring: Spring => SpringRenderer(spring)
-//    case damper: Damper => DamperRenderer(damper)
-//    case springDamper: SpringDamper => SpringDamperRenderer(springDamper)
-//    case drag: DragParticleFunction1 => DragRenderer(drag)
-//    case constant: ConstantForceParticleFunction1 => ConstantForceRenderer(constant)
-//    case _ => throw new IllegalArgumentException("unknown object type: " + obj)
   }
 }
 
@@ -75,57 +67,4 @@ case object Force2Renderer extends Renderer[Force2] {
     //      bounds = bounds
     //    )
   }
-
 }
-
-//case class Force1Renderer(force: Force1) extends Renderer {
-//  def render(g: Graphics2D, bounds: Bounds3D) = {
-//    val p1 = force.pId.p.p
-//    val p2 = gravity.p.p + gravity.force
-//
-//    RendererUtils.drawForce(g, gravity, p1, p2, bounds)
-//
-////    RendererUtils.drawVector3DAsText(
-////      g = g,
-////      pos = p2,
-////      value = gravity.force,
-////      bounds = bounds
-////    )
-//  }
-//}
-//
-//case class SpringRenderer(spring: Spring) extends Renderer {
-//  def render(g: Graphics2D, bounds: Bounds3D) = RendererUtils.drawForce(g, spring, spring.p1.p, spring.p2.p, bounds)
-//}
-//
-//case class GravitationalForceRenderer(gravitationalForce: GravitationalForce) extends Renderer {
-//  def render(g: Graphics2D, bounds: Bounds3D) = RendererUtils.drawForce(g, gravitationalForce, gravitationalForce.p1.p, gravitationalForce.p2.p, bounds)
-//}
-//
-//case class DamperRenderer(damper: Damper) extends Renderer {
-//  def render(g: Graphics2D, bounds: Bounds3D) = { /* RendererUtils.drawForce(g, damper, damper.p1.p, damper.p2.p, RendererUtils.getForceColor(damper), bounds) */ }
-//}
-//
-//case class SpringDamperRenderer(springDamper: SpringDamper) extends Renderer {
-//  def render(g: Graphics2D, bounds: Bounds3D) = RendererUtils.drawForce(g, springDamper, springDamper.p1.p, springDamper.p2.p, bounds)
-//}
-//
-//case class DragRenderer(drag: DragParticleFunction1) extends Renderer {
-//  def render(g: Graphics2D, bounds: Bounds3D) = {
-//    val p1 = drag.p.p
-//    val p2 = drag.p.p + drag.force
-//
-//    RendererUtils.drawForce(g, drag, p1, p2, bounds)
-//
-////    RendererUtils.drawVector3DAsText(
-////      g = g,
-////      pos = p2,
-////      value = drag.force,
-////      bounds = bounds
-////    )
-//  }
-//}
-//
-//case class ConstantForceRenderer(constant: ConstantForceParticleFunction1) extends Renderer {
-//  def render(g: Graphics2D, bounds: Bounds3D) = RendererUtils.drawForce(g, constant, constant.p.p, constant.p.p - constant.force, bounds)
-//}
