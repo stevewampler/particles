@@ -35,10 +35,8 @@ object RendererUtils {
     )
   }
 
-  def drawForce1(g: Graphics2D, force: Force, p1: Vector3D, bounds: Bounds3D): Unit = {
-    g.setColor(getForceColor(force))
+  def drawForce1(g: Graphics2D, force: Force, p1: Vector3D, bounds: Bounds3D): Unit =
     drawVector(g, p1, force.value, bounds)
-  }
 
   def drawForce2(g: Graphics2D, force: Force, p1: Vector3D, p2: Vector3D, bounds: Bounds3D): Unit = {
     val width = g.getClipBounds.width

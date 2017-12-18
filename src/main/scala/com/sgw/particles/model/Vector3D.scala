@@ -18,7 +18,7 @@ case class Vector3D(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) {
   def add(v2: Vector3D) = Vector3D(x + v2.x, y + v2.y, z + v2.z)
   def add(s: Double) = Vector3D(x + s, y + s, z + s)
   def cross_product(v2: Vector3D) = Vector3D(x * v2.x, y * v2.y, z * v2.z)
-  def dot_product(v2: Vector3D) = x * v2.x + y * v2.y + z * v2.z
+  def dotProduct(v2: Vector3D) = x * v2.x + y * v2.y + z * v2.z
   def squared = cross_product(this)
   def inverse = Vector3D(1.0/x, 1.0/y, 1.0/z)
   def bounds(v2: Vector3D): Pair[Vector3D, Vector3D] = Pair(min(v2), max(v2))
@@ -40,9 +40,11 @@ case class Vector3D(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) {
     scale(s).round.scale(1.0/s)
   }
 
-  def projectOnTo(v2: Vector3D): Vector3D = {
+  def scalarProjectionOnTo(v2: Vector3D): Double = dotProduct(v2.normalize)
+
+  def vectorProjectionOnTo(v2: Vector3D): Vector3D = {
     val v2norm = v2.normalize
-    v2norm * this.dot_product(v2norm)
+    v2norm * this.dotProduct(v2norm)
   }
 
   def -(v2: Vector3D) = sub(v2)

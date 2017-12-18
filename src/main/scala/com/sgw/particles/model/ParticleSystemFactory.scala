@@ -12,6 +12,8 @@ object ParticleSystemFactory {
           case "SimpleParticleSystemFactory"    => SimpleParticleSystemFactory.playFormat.reads(json)
           case "BeamParticleSystemFactory"      => BeamParticleSystemFactory.playFormat.reads(json)
           case "PlanetaryParticleSystemFactory" => PlanetaryParticleSystemFactory.playFormat.reads(json)
+          case "AnchoredStringParticleSystemFactory" => AnchoredStringParticleSystemFactory.playFormat.reads(json)
+          case "AnchoredFlagParticleSystemFactory" => AnchoredFlagParticleSystemFactory.playFormat.reads(json)
         }
 
     override def writes(func: ParticleSystemFactory): JsValue = {
@@ -19,6 +21,8 @@ object ParticleSystemFactory {
         case factory: SimpleParticleSystemFactory => SimpleParticleSystemFactory.playFormat.writes(factory)
         case factory: BeamParticleSystemFactory   => BeamParticleSystemFactory.playFormat.writes(factory)
         case factory: PlanetaryParticleSystemFactory => PlanetaryParticleSystemFactory.playFormat.writes(factory)
+        case factory: AnchoredStringParticleSystemFactory => AnchoredStringParticleSystemFactory.playFormat.writes(factory)
+        case factory: AnchoredFlagParticleSystemFactory => AnchoredFlagParticleSystemFactory.playFormat.writes(factory)
       }
     }
   }
@@ -56,6 +60,366 @@ case class SimpleParticleSystemFactory(
     )
 }
 
+// AnchoredStringParticleSystemFactory
+
+object AnchoredStringParticleSystemFactory {
+  implicit val playFormat: Format[AnchoredStringParticleSystemFactory] = new Format[AnchoredStringParticleSystemFactory] {
+    override def reads(json: JsValue) = Json.reads[AnchoredStringParticleSystemFactory].reads(json)
+
+    override def writes(factory: AnchoredStringParticleSystemFactory): JsValue = Json.writes[AnchoredStringParticleSystemFactory].writes(factory).deepMerge(
+      Json.obj("type" -> JsString(factory.getClass.getName))
+    )
+  }
+}
+
+case class AnchoredStringParticleSystemFactory(
+  name: Option[String],
+  numParticles: Option[Int],
+  dx: Option[Int],
+  dy: Option[Int],
+  m: Option[Double],
+  radius: Option[Double],
+  area: Option[Double],
+  gravity: Option[Boolean],
+  springConstTension: Option[Double],
+  springConstCompression: Option[Double],
+  maxSpringForce: Option[Double],
+  dampingCoeffTension: Option[Double],
+  dampingCoeffCompression: Option[Double],
+  maxDamperForce: Option[Double],
+  fluidDensity: Option[Double],
+  dragCoeff: Option[Double],
+  dragFlowFunc: Option[ParticleFunction1]
+) extends ParticleSystemFactory {
+  override def createParticleSystem: ParticleSystem =
+    createParticleSystem(
+      name = name.getOrElse("String"),
+      numParticles = numParticles.getOrElse(8),
+      dx = dx.getOrElse(10),
+      dy = dy.getOrElse(10),
+      m = m.getOrElse(1.0),
+      radius = radius.getOrElse(1.0),
+      area = area.getOrElse(1.0),
+      gravity = gravity.getOrElse(true),
+      springConstTension = springConstTension.getOrElse(100.0),
+      springConstCompression = springConstCompression.getOrElse(100.0),
+      maxSpringForce = maxSpringForce.getOrElse(100000),
+      dampingCoeffTension = dampingCoeffTension.getOrElse(20.0),
+      dampingCoeffCompression = dampingCoeffCompression.getOrElse(20.0),
+      maxDamperForce = maxDamperForce.getOrElse(Double.MaxValue),
+      fluidDensity = fluidDensity.getOrElse(0.5),
+      dragCoeff = dragCoeff.getOrElse(0.47),
+      flowFunc = dragFlowFunc.getOrElse(
+        ParticleTimeFunction(
+          SinWaveVector3DFunction(
+            offset  = Vector3D(10.0), // m/s
+            amplitude = Vector3D(20.0, 1.0), // m/s
+            frequency  = Vector3D(0.01, 1.0, 1.0), // cycles/sec
+            phase = Vector3D()
+          )
+        )
+      )
+    )
+
+  def createParticleSystem(
+    name: String,
+    numParticles: Int,
+    dx: Int,
+    dy: Int,
+    m: Double,
+    radius: Double,
+    area: Double,
+    gravity: Boolean,
+    springConstTension: Double,
+    springConstCompression: Double,
+    maxSpringForce: Double,
+    dampingCoeffTension: Double,
+    dampingCoeffCompression: Double,
+    maxDamperForce: Double,
+    fluidDensity: Double,
+    dragCoeff: Double,
+    flowFunc: ParticleFunction1
+  ): ParticleSystem = {
+    val particles = (0 to numParticles).map { id =>
+      val m1 = if (id == 0) Double.MaxValue else m
+
+      Particle(
+        id = id,
+        name = id.toString,
+        t = 0,
+        m = m1,
+        p = Vector3D(id * dx, id * dy),
+        v = Vector3D.ZeroValue,
+        a = Vector3D.ZeroValue,
+        f = Vector3D.ZeroValue,
+        m1 = m1,
+        f1 = Vector3D.ZeroValue,
+        radius = radius,
+        age = 0,
+        area = area
+      )
+    }.toList
+
+    val pIds = particles.map(_.id)
+
+    val particleMap = particles.map { particle =>
+      particle.id -> particle
+    }.toMap
+
+    val gravityForces: List[Force] = if (gravity) {
+      GravityFactory(
+        pIds = pIds.tail
+      ).createForces(particleMap)
+    } else {
+      List()
+    }
+
+    val springDamperParticleIds: List[List[Particle.ID]] = pIds.init.zip(pIds.tail).map { case (pId1, pId2) =>
+      List(pId1, pId2)
+    }
+
+    val springDamperForces: List[Force] = SpringDamperFactory(
+      pIds = springDamperParticleIds,
+      springConstTension = Some(springConstTension),
+      springConstCompression = Some(springConstCompression),
+      restLength = None,
+      dampingCoeffTension = Some(dampingCoeffTension),
+      dampingCoeffCompression = Some(dampingCoeffCompression),
+      maxSpringForce = Some(maxSpringForce),
+      maxDamperForce = Some(maxDamperForce)
+    ).createForces(particleMap)
+
+    val wind: List[Force] = {
+      DragFactory(
+        pIds,
+        fluidDensity = Some(fluidDensity),
+        dragCoeff = Some(dragCoeff),
+        flowFunc = Some(flowFunc)
+      ).createForces(particleMap)
+    }
+
+    val forces = gravityForces ++ springDamperForces ++ wind
+
+    val bounds = ParticleSystemUtils.bounds(particles) * 4
+
+    ParticleSystem(
+      name = name,
+      particles,
+      forces,
+      Some(bounds)
+    )
+  }
+}
+
+// AnchoredFlagParticleSystemFactory
+
+object AnchoredFlagParticleSystemFactory {
+  implicit val playFormat: Format[AnchoredFlagParticleSystemFactory] = new Format[AnchoredFlagParticleSystemFactory] {
+    override def reads(json: JsValue) = Json.reads[AnchoredFlagParticleSystemFactory].reads(json)
+
+    override def writes(factory: AnchoredFlagParticleSystemFactory): JsValue = Json.writes[AnchoredFlagParticleSystemFactory].writes(factory).deepMerge(
+      Json.obj("type" -> JsString(factory.getClass.getName))
+    )
+  }
+}
+
+case class AnchoredFlagParticleSystemFactory(
+  name: Option[String],
+  numRows: Option[Int],
+  numCols: Option[Int],
+  dx: Option[Int],
+  dy: Option[Int],
+  m: Option[Double],
+  radius: Option[Double],
+  area: Option[Double],
+  gravity: Option[Boolean],
+  springConstTension: Option[Double],
+  springConstCompression: Option[Double],
+  maxSpringForce: Option[Double],
+  dampingCoeffTension: Option[Double],
+  dampingCoeffCompression: Option[Double],
+  maxDamperForce: Option[Double],
+  fluidDensity: Option[Double],
+  dragCoeff: Option[Double],
+  dragFlowFunc: Option[ParticleFunction1]
+) extends ParticleSystemFactory {
+  override def createParticleSystem: ParticleSystem =
+    createParticleSystem(
+      name = name.getOrElse("String"),
+      numRows = numRows.getOrElse(8),
+      numCols = numCols.getOrElse(9),
+      dx = dx.getOrElse(10),
+      dy = dy.getOrElse(10),
+      m = m.getOrElse(1.0),
+      radius = radius.getOrElse(1.0),
+      area = area.getOrElse(1.0),
+      gravity = gravity.getOrElse(true),
+      springConstTension = springConstTension.getOrElse(100.0),
+      springConstCompression = springConstCompression.getOrElse(0.0),
+      maxSpringForce = maxSpringForce.getOrElse(100000),
+      dampingCoeffTension = dampingCoeffTension.getOrElse(20.0),
+      dampingCoeffCompression = dampingCoeffCompression.getOrElse(20.0),
+      maxDamperForce = maxDamperForce.getOrElse(Double.MaxValue),
+      fluidDensity = fluidDensity.getOrElse(0.5),
+      dragCoeff = dragCoeff.getOrElse(0.47),
+      flowFunc = dragFlowFunc.getOrElse(
+        ParticleTimeFunction(
+          SinWaveVector3DFunction(
+            offset  = Vector3D(10.0), // m/s
+            amplitude = Vector3D(20.0, 1.0), // m/s
+            frequency  = Vector3D(0.01, 1.0, 1.0), // cycles/sec
+            phase = Vector3D()
+          )
+        )
+      )
+    )
+
+  def createParticleSystem(
+    name: String,
+    numRows: Int,
+    numCols: Int,
+    dx: Int,
+    dy: Int,
+    m: Double,
+    radius: Double,
+    area: Double,
+    gravity: Boolean,
+    springConstTension: Double,
+    springConstCompression: Double,
+    maxSpringForce: Double,
+    dampingCoeffTension: Double,
+    dampingCoeffCompression: Double,
+    maxDamperForce: Double,
+    fluidDensity: Double,
+    dragCoeff: Double,
+    flowFunc: ParticleFunction1
+  ): ParticleSystem = {
+    val particleMatrix = (0 until numRows).map { rowId =>
+      (0 until numCols).map { colId =>
+        val id = rowId * numCols + colId
+
+        val m1 = if (colId == 0) Double.MaxValue else m
+
+        val area1 = if (rowId == 0 || rowId == numRows - 1) {
+          if (colId == 0 || colId == numCols - 1) {
+            area / 4
+          } else {
+            area / 2
+          }
+        } else {
+          if (colId == 0 || colId == numCols - 1) {
+            area / 2
+          } else {
+            area
+          }
+        }
+
+        Particle(
+          id = id,
+          name = id.toString,
+          t = 0,
+          m = m1,
+          p = Vector3D(colId * dx, rowId * dy),
+          v = Vector3D.ZeroValue,
+          a = Vector3D.ZeroValue,
+          f = Vector3D.ZeroValue,
+          m1 = m1,
+          f1 = Vector3D.ZeroValue,
+          radius = radius,
+          age = 0,
+          area = area1
+        )
+      }.toList
+    }.toList
+
+    val particles = particleMatrix.flatten
+
+    val pIds = particles.map(_.id)
+
+    val particleMap = particles.map { particle =>
+      particle.id -> particle
+    }.toMap
+
+    val gravityForces: List[Force] = if (gravity) {
+      GravityFactory(
+        particles.filter(_.m != Double.MaxValue).map(_.id)
+      ).createForces(particleMap)
+    } else {
+      List()
+    }
+
+    val rowSprings: Seq[Force] = {
+      val pIds: List[List[Particle.ID]] =
+        particleMatrix.flatMap { rowParticles =>
+          rowParticles.filter { particle =>
+            particle.m > 0.0
+          }.init.zip(
+            rowParticles.filter { particle =>
+              particle.m > 0.0
+            }.tail
+          ).map { case (p1, p2) =>
+            List(p1.id, p2.id)
+          }
+        }
+
+      SpringDamperFactory(
+        pIds,
+        springConstTension = Some(springConstTension),
+        springConstCompression = Some(springConstCompression),
+        restLength = None,
+        dampingCoeffTension = Some(dampingCoeffTension),
+        dampingCoeffCompression = Some(dampingCoeffCompression),
+        maxSpringForce = Some(maxSpringForce),
+        maxDamperForce = None
+      ).createForces(particleMap)
+    }
+
+    val colSprings: Seq[Force] = {
+      val pIds: List[List[Particle.ID]] = (0 until numCols).flatMap { col =>
+        (0 until numRows - 1).filter { row =>
+          particleMatrix(row)(col).m > 0.0 && particleMatrix(row + 1)(col).m > 0.0
+        }.map { row =>
+          List(
+            particleMatrix(row)(col).id,
+            particleMatrix(row+1)(col).id
+          )
+        }
+      }.toList
+
+      SpringDamperFactory(
+        pIds,
+        springConstTension = Some(springConstTension),
+        springConstCompression = Some(springConstCompression),
+        restLength = None,
+        dampingCoeffTension = Some(dampingCoeffTension),
+        dampingCoeffCompression = Some(dampingCoeffCompression),
+        maxSpringForce = Some(maxSpringForce),
+        maxDamperForce = None
+      ).createForces(particleMap)
+    }
+
+    val wind: List[Force] = {
+      DragFactory(
+        pIds,
+        fluidDensity = Some(fluidDensity),
+        dragCoeff = Some(dragCoeff),
+        flowFunc = Some(flowFunc)
+      ).createForces(particleMap)
+    }
+
+    val forces = gravityForces ++ rowSprings ++ colSprings ++ wind
+
+    val bounds = ParticleSystemUtils.bounds(particles) * 4
+
+    ParticleSystem(
+      name = name,
+      particles,
+      forces,
+      Some(bounds)
+    )
+  }
+}
+
 // BeamParticleSystemFactory
 
 object BeamParticleSystemFactory {
@@ -74,8 +438,10 @@ case class BeamParticleSystemFactory(
   numCols: Option[Int],
   spread: Option[Double],
   m: Option[Double],
-  springConst: Option[Double],
-  dampingCoeff: Option[Double],
+  springConstTension: Option[Double],
+  springConstCompression: Option[Double],
+  dampingCoeffTension: Option[Double],
+  dampingCoeffCompression: Option[Double],
   maxForce: Option[Double],
   fluidDensity: Option[Double],
   dragCoeff: Option[Double]
@@ -101,8 +467,10 @@ case class BeamParticleSystemFactory(
       numCols = numCols.getOrElse(10),
       spread = spread.getOrElse(100.0),
       m = m.getOrElse(1.0),
-      springConst = springConst.getOrElse(100.0),
-      dampingCoeff = dampingCoeff.getOrElse(20.0),
+      springConstTension = springConstTension.getOrElse(100.0),
+      springConstCompression = springConstCompression.getOrElse(100.0),
+      dampingCoeffTension = dampingCoeffTension.getOrElse(20.0),
+      dampingCoeffCompression = dampingCoeffCompression.getOrElse(20.0),
       maxForce = maxForce.getOrElse(10000),
       fluidDensity = fluidDensity.getOrElse(0.5),
       dragCoeff = dragCoeff.getOrElse(0.47)
@@ -114,8 +482,10 @@ case class BeamParticleSystemFactory(
     numCols: Int,
     spread: Double,
     m: Double,
-    springConst: Double = 500.0,
-    dampingCoeff: Double = 100.0,
+    springConstTension: Double = 500.0,
+    springConstCompression: Double = 500.0,
+    dampingCoeffTension: Double = 100.0,
+    dampingCoeffCompression: Double = 100.0,
     maxForce: Double = 500,
     fluidDensity: Double = 0.5,
     dragCoeff: Double = 0.47
@@ -178,9 +548,11 @@ case class BeamParticleSystemFactory(
 
       SpringDamperFactory(
         listOfListOfParticleIds,
-        springConstant = Some(springConst),
+        springConstTension = Some(springConstTension),
+        springConstCompression = Some(springConstCompression),
         restLength = None,
-        dampingCoeff = Some(dampingCoeff),
+        dampingCoeffTension = Some(dampingCoeffTension),
+        dampingCoeffCompression = Some(dampingCoeffCompression),
         maxSpringForce = Some(maxForce),
         maxDamperForce = None
       ).createForces(particleMap)
@@ -199,10 +571,12 @@ case class BeamParticleSystemFactory(
       }.toList
 
       SpringDamperFactory(
-        listOfListOfParticleIds,
-        Some(springConst),
-        Some(spread),
-        Some(dampingCoeff),
+        pIds = listOfListOfParticleIds,
+        springConstTension = Some(springConstTension),
+        springConstCompression = Some(springConstCompression),
+        restLength = Some(spread),
+        dampingCoeffTension = Some(dampingCoeffTension),
+        dampingCoeffCompression = Some(dampingCoeffCompression),
         maxSpringForce = Some(maxForce),
         maxDamperForce = None
       ).createForces(particleMap)
@@ -224,9 +598,11 @@ case class BeamParticleSystemFactory(
 
       SpringDamperFactory(
         pIds = listOfListOfParticleIds,
-        springConstant = Some(springConst),
+        springConstTension = Some(springConstTension),
+        springConstCompression = Some(springConstCompression),
         restLength = Some(r),
-        dampingCoeff = Some(dampingCoeff),
+        dampingCoeffTension = Some(dampingCoeffTension),
+        dampingCoeffCompression = Some(dampingCoeffCompression),
         maxSpringForce = Some(maxForce),
         maxDamperForce = None
       ).createForces(particleMap)
@@ -246,9 +622,11 @@ case class BeamParticleSystemFactory(
 
       SpringDamperFactory(
         pIds = listOfListOfParticleIds,
-        springConstant = Some(springConst),
+        springConstTension = Some(springConstTension),
+        springConstCompression = Some(springConstCompression),
         restLength = Some(r),
-        dampingCoeff = Some(dampingCoeff),
+        dampingCoeffTension = Some(dampingCoeffTension),
+        dampingCoeffCompression = Some(dampingCoeffCompression),
         maxSpringForce = Some(maxForce),
         maxDamperForce = None
       ).createForces(particleMap)

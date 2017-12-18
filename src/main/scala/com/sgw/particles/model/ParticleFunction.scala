@@ -12,6 +12,7 @@ object ParticleFunction1 {
           case "ConstantVector3DParticleFunction" => ConstantVector3DParticleFunction1.playFormat.reads(json)
           case "ParticleTimeFunction" => ParticleTimeFunction.playFormat.reads(json)
           case "ParticlePositionFunction" => ParticlePositionFunction.playFormat.reads(json)
+          case "ParticlePositionAndTimeFunction" => ParticlePositionAndTimeFunction.playFormat.reads(json)
           case "ParticleVelocityFunction" => ParticleVelocityFunction.playFormat.reads(json)
           case "CompositeParticleFunction1" => CompositeParticleFunction1.playFormat.reads(json)
         }
@@ -21,6 +22,7 @@ object ParticleFunction1 {
         case func: ConstantVector3DParticleFunction1 => ConstantVector3DParticleFunction1.playFormat.writes(func)
         case func: ParticleTimeFunction => ParticleTimeFunction.playFormat.writes(func)
         case func: ParticlePositionFunction => ParticlePositionFunction.playFormat.writes(func)
+        case func: ParticlePositionAndTimeFunction => ParticlePositionAndTimeFunction.playFormat.writes(func)
         case func: ParticleVelocityFunction => ParticleVelocityFunction.playFormat.writes(func)
         case func: ParticleAccelerationFunction => ParticleAccelerationFunction.playFormat.writes(func)
         case func: CompositeParticleFunction1 => CompositeParticleFunction1.playFormat.writes(func)
@@ -117,6 +119,24 @@ object ParticlePositionFunction {
   */
 case class ParticlePositionFunction(func: Vector3DFunction) extends ParticleFunction1 {
   def apply(p: Particle) = func(p.p)
+}
+
+object ParticlePositionAndTimeFunction {
+  implicit val playFormat: Format[ParticlePositionAndTimeFunction] = new Format[ParticlePositionAndTimeFunction] {
+    override def reads(json: JsValue) = Json.reads[ParticlePositionAndTimeFunction].reads(json)
+
+    override def writes(func: ParticlePositionAndTimeFunction): JsValue = Json.writes[ParticlePositionAndTimeFunction].writes(func).deepMerge(
+      Json.obj("type" -> JsString(func.getClass.getName))
+    )
+  }
+}
+
+/**
+  * A ParticleFunction that applies a specified Vector3DFunction to a Particle's position and time.
+  * @param func The function to be applied to a Particle's position.
+  */
+case class ParticlePositionAndTimeFunction(func: Vector3DFunction) extends ParticleFunction1 {
+  def apply(p: Particle) = func(p.p + p.t)
 }
 
 object ParticleVelocityFunction {

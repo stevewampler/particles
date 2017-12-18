@@ -157,8 +157,11 @@
             8
           ]
         ],
-        "springConstant": 100,
-        "maxSpringForce": 100000
+        "springConstTension": 100,
+        "springConstCompression": 0,
+        "maxSpringForce": 100000,
+        "dampingCoeffTension": 20,
+        "dampingCoeffCompression": 0
       },
       {
         "type": "Drag",

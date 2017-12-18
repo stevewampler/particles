@@ -4,6 +4,7 @@ import java.awt.geom.{Ellipse2D, Line2D}
 import java.awt.{Color, Graphics2D}
 
 import com.sgw.particles.model._
+import com.sgw.particles.swing.RendererUtils.getForceColor
 
 sealed trait Renderer[T] {
   def render(g: Graphics2D, pSys: ParticleSystem, item: T): Unit
@@ -46,8 +47,15 @@ case object ParticleRenderer extends Renderer[Particle] {
 }
 
 case object Force1Renderer extends Renderer[Force1] {
+  final val dragForceColor = new Color(0,0,255,10)
+
   def render(g: Graphics2D, pSys: ParticleSystem, force: Force1): Unit = {
     val p1 = pSys.getParticle(force.pId)
+
+    force.forceFunc match {
+      case _: Drag => g.setColor(dragForceColor)
+      case _ => g.setColor(getForceColor(force))
+    }
 
     RendererUtils.drawForce1(g, force, p1.p, pSys.bounds)
   }

@@ -7,8 +7,10 @@
     "numCols": 10,
     "spread": 100.0,
     "m": 1.0,
-    "springConst": 100.0,
-    "dampingCoeff": 20.0,
+    "springConstTension": 100.0,
+    "springConstCompression": 100.0,
+    "dampingCoeffTension": 20.0,
+    "dampingCoeffCompression": 20.0,
     "maxForce": 10000
   },
   "dt": 0.01
