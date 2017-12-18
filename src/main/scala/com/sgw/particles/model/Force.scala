@@ -110,7 +110,7 @@ sealed trait Force {
   val maxForce: Double // the maximum magnitude of this force's force vector
   val value: Vector3D
 
-  def apply(pSys: ParticleSystem)(dt: Double): ParticleSystem
+  def apply(pSys: ParticleSystem): ParticleSystem
 }
 
 case class Force1(
@@ -121,7 +121,7 @@ case class Force1(
   value: Vector3D = Vector3D.ZeroValue
 ) extends Force {
 
-  def apply(pSys: ParticleSystem)(dt: Double): ParticleSystem = {
+  def apply(pSys: ParticleSystem): ParticleSystem = {
     val p = pSys.getParticle(pId)
 
     val fVector = forceFunc(p)
@@ -161,7 +161,7 @@ case class Force2(
   value: Vector3D = Vector3D.ZeroValue
 ) extends Force {
 
-  def apply(pSys: ParticleSystem)(dt: Double): ParticleSystem = {
+  def apply(pSys: ParticleSystem): ParticleSystem = {
     val p1 = pSys.getParticle(p1Id)
     val p2 = pSys.getParticle(p2Id)
 

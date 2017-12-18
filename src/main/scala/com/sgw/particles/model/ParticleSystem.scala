@@ -86,11 +86,16 @@ case class ParticleSystem(
   forceMap: Map[Force.ID, Force],
   bounds: Bounds3D
 ) {
-  def apply(dt: Double): ParticleSystem = applyForces(dt).moveParticles(dt)
+  def initForces: ParticleSystem =
+    particleMap.values.foldLeft(this) { case (pSys, particle) =>
+      particle.initForces(pSys)
+    }
 
-  private def applyForces(dt: Double): ParticleSystem =
+  def apply(dt: Double): ParticleSystem = calcForces.moveParticles(dt)
+
+  private def calcForces: ParticleSystem =
     forceMap.values.foldLeft(this) { case (pSys, force) =>
-      force(pSys)(dt)
+      force(pSys)
     }
 
   private def moveParticles(dt: Double): ParticleSystem =

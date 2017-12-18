@@ -85,6 +85,18 @@ case class Particle(
   age: Double,
   area: Double
 ) {
+  def initForces(pSys: ParticleSystem): ParticleSystem = {
+    pSys.copy(
+      particleMap = pSys.particleMap.updated(
+        id,
+        copy(
+          f = f1,
+          f1 = Vector3D.ZeroValue
+        )
+      )
+    )
+  }
+
   /**
     * Applies the specified time delta to this particle, currently at time t0, and returns a new particle system
     * containing the new particle at time t1.
@@ -99,7 +111,6 @@ case class Particle(
 
     val a1 = if (m != Double.MaxValue) {
       (f + f1) / 2.0 / (m + m1) / 2.0
-//      f1 / m1
     } else {
       a
     }

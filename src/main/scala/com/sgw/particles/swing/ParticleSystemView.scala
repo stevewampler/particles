@@ -18,7 +18,7 @@ case class ParticleSystemView(
   dt: Option[Double],
   sleep: Option[Double]
 ) extends Panel {
-  private var pSys = particleSystemFactory.createParticleSystem
+  private var pSys = particleSystemFactory.createParticleSystem.initForces
   private val width = 800
   private val height = 800
   private val _dt = dt.getOrElse(0.01)
