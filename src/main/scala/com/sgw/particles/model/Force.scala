@@ -1,6 +1,7 @@
 package com.sgw.particles.model
 
-import com.sgw.particles.model.Particle.ID
+import java.util.concurrent.atomic.AtomicLong
+
 import play.api.libs.json._
 
 /*
@@ -52,65 +53,147 @@ sealed trait ForceFactory {
   }
 
   protected def getParticle(
-    pId: Particle.ID,
     particleMap: Map[Particle.ID, Particle]
+  )(
+    pId: Particle.ID
   ): Particle = particleMap.getOrElse(pId, unknownParticleId(pId))
 }
 
 sealed abstract class Force1Factory(pIds: List[Particle.ID]) extends ForceFactory {
-  override def createForces(
-    particleMap: Map[ID, Particle]
-  ): List[Force] = pIds.map { pId =>
-    createForce(getParticle(pId, particleMap))
-  }
+  override def createForces(particleMap: Map[Particle.ID, Particle]): List[Force] =
+    pIds.map(getParticle(particleMap)).map(createForce)
 
-  protected def createForce(p1: Particle): Force
+  protected def createForce(particle: Particle): Force1
 }
 
-sealed abstract class Force2CombinationFactory(listOfListOfParticleIds: List[List[Particle.ID]]) extends ForceFactory {
-  override def createForces(
-    particleMap: Map[ID, Particle]
-  ): List[Force] = listOfListOfParticleIds.flatMap { listOfParticleIds =>
-    listOfParticleIds.map { particleId =>
-      getParticle(particleId, particleMap)
-    }.combinations(2).map { case List(particle1, particle2) =>
-      createForce(particle1, particle2)
-    }
-  }
+sealed abstract class Force2Factory(p1Id: Particle.ID, p2Id: Particle.ID) extends ForceFactory {
+  override def createForces(particleMap: Map[Particle.ID, Particle]): List[Force] =
+    List(
+      createForce(
+        getParticle(particleMap)(p1Id),
+        getParticle(particleMap)(p2Id)
+      )
+    )
 
-  protected def createForce(p1: Particle, p2: Particle): Force
+  protected def createForce(p1: Particle, p2: Particle): Force1
+}
+
+sealed abstract class Force2CombinationFactory(
+  pIds: List[List[Particle.ID]]
+) extends ForceFactory {
+  override def createForces(particleMap: Map[Particle.ID, Particle]): List[Force2] =
+    pIds.flatMap { listOfParticleIds =>
+      listOfParticleIds.combinations(2).flatMap { case List(p1Id, p2Id) =>
+        createForces(
+          getParticle(particleMap)(p1Id),
+          getParticle(particleMap)(p2Id)
+        )
+      }
+    }
+
+  protected def createForces(p1: Particle, p2: Particle): List[Force2]
+}
+
+object Force {
+  type ID = Long
+
+  private val _nextForceId: AtomicLong = new AtomicLong(-1)
+
+  def nextForceId: ID = _nextForceId.incrementAndGet()
 }
 
 /**
- * A function that applies a force to one or more particles over the specified delta time.
+ * A function that applies a force to a specified particle over the specified delta time.
  */
 sealed trait Force {
-  var broken = false
+  val id: Force.ID
+  val maxForce: Double // the maximum magnitude of this force's force vector
+  val value: Vector3D
 
-  def force: Vector3D
-  def maxForce = Double.MaxValue
-
-  def apply: Unit
+  def apply(pSys: ParticleSystem)(dt: Double): ParticleSystem
 }
 
-sealed trait Force1 extends Force {
-  val p: Particle
-  def apply = {
-    val f = force
-    broken = broken || f.len > maxForce
-    if (!broken) p.a = p.a + f / p.m
+case class Force1(
+  id: Force.ID,
+  pId: Particle.ID,
+  forceFunc: ParticleFunction1,
+  maxForce: Double = Double.MaxValue,
+  value: Vector3D = Vector3D.ZeroValue
+) extends Force {
+
+  def apply(pSys: ParticleSystem)(dt: Double): ParticleSystem = {
+    val p = pSys.getParticle(pId)
+
+    val fVector = forceFunc(p)
+
+    // if the force is broken ...
+    if (fVector.len > maxForce) {
+      // remove the force from the particle system and don't update the particle's force vector
+      pSys.copy(
+        forceMap = pSys.forceMap - id
+      )
+    } else {
+      // update the particle's force vector
+      pSys.copy(
+        particleMap = pSys.particleMap.updated(
+          p.id,
+          p.copy(
+            f1 = p.f1 + fVector
+          )
+        ),
+        forceMap = pSys.forceMap.updated(
+          id,
+          copy(
+            value = fVector
+          )
+        )
+      )
+    }
   }
 }
 
-sealed trait Force2 extends Force {
-  val p1: Particle
-  val p2: Particle
-  def apply = {
-    val f = force
-    broken = broken || f.len > maxForce
-    if (!broken) {
-      p1.a = p1.a + f / p1.m
-      p2.a = p2.a - f / p2.m
+case class Force2(
+  id: Force.ID,
+  p1Id: Particle.ID,
+  p2Id: Particle.ID,
+  forceFunc: ParticleFunction2,
+  maxForce: Double = Double.MaxValue,
+  value: Vector3D = Vector3D.ZeroValue
+) extends Force {
+
+  def apply(pSys: ParticleSystem)(dt: Double): ParticleSystem = {
+    val p1 = pSys.getParticle(p1Id)
+    val p2 = pSys.getParticle(p2Id)
+
+    val fVector = forceFunc(p1, p2)
+
+    // if the force is broken ...
+    if (fVector.len > maxForce) {
+      // remove the force from the particle system and don't update the particle's force vector
+      pSys.copy(
+        forceMap = pSys.forceMap - id
+      )
+    } else {
+      // update both particle's force vector
+      pSys.copy(
+        particleMap = pSys.particleMap.updated(
+          p1.id,
+          p1.copy(
+            f1 = p1.f1 + fVector
+          )
+        ).updated(
+          p2.id,
+          p2.copy(
+            f1 = p2.f1 - fVector
+          )
+        ),
+        forceMap = pSys.forceMap.updated(
+          id,
+          copy(
+            value = fVector
+          )
+        )
+      )
     }
   }
 }
@@ -127,26 +210,25 @@ object GravityFactory {
 
 case class GravityFactory(
   pIds: List[Particle.ID],
-  gv: Option[Vector3D],
+  gv: Option[Vector3D] = None
 ) extends Force1Factory(pIds) {
-  def createForce(p1: Particle): Force =
-    Gravity(
-      p = p1,
-      gv = gv.getOrElse(Gravity.gv)
+  protected def createForce(particle: Particle): Force1 =
+    Force1(
+      id = Force.nextForceId,
+      pId = particle.id,
+      forceFunc = Gravity(gv.getOrElse(Gravity.gv)),
     )
 }
 
 object Gravity {
-  val g = -9.81
-  val gv = Vector3D(0.0, g, 0.0)
+  val g: Double = -9.81
+  val gv: Vector3D = Vector3D(0.0, g)
 }
 
 case class Gravity(
-  p: Particle,
   gv: Vector3D = Gravity.gv
-) extends Force {
-  def force = gv * p.m
-  def apply = p.a = p.a + gv
+) extends ParticleFunction1 {
+  def apply(p: Particle): Vector3D = gv * p.m
 }
 
 object GravitationalForceFactory {
@@ -160,21 +242,26 @@ object GravitationalForceFactory {
 }
 
 case class GravitationalForceFactory(
-  pIds: List[List[Particle.ID]],
-  bigG: Option[Double]
-) extends Force2CombinationFactory(pIds) {
-  override def createForce(
+  listOfListOfParticleIds: List[List[Particle.ID]],
+  bigG: Option[Double] = None
+) extends Force2CombinationFactory(listOfListOfParticleIds) {
+  override def createForces(
     p1: Particle,
     p2: Particle
-  ): Force = GravitationalForce(
-    p1 = p1,
-    p2 = p2,
-    bigG = bigG.getOrElse(GravitationalForce.bigG)
+  ): List[Force2] = List(
+    Force2(
+      id = Force.nextForceId,
+      p1Id = p1.id,
+      p2Id = p2.id,
+      GravitationalForce(
+        bigG = bigG.getOrElse(GravitationalForce.bigG)
+      )
+    )
   )
 }
 
 object GravitationalForce {
-  val bigG = 6.674 * Math.pow(10.0, -11)
+  val bigG: Double = 6.674 * Math.pow(10.0, -11)
 }
 
 // Mass of Sun: 1.989E30 kg
@@ -185,18 +272,48 @@ object GravitationalForce {
 // Mass of Moon: 7.34767309E22 kilograms
 // Distance of Earth to Moon: 384,400 km
 case class GravitationalForce(
-  p1: Particle,
-  p2: Particle,
   bigG: Double = GravitationalForce.bigG
-) extends Force2 {
-  def force = (p2.p - p1.p).normalize * bigG * p1.m * p2.m / Math.pow((p1.p - p2.p).len, 2)
+) extends ParticleFunction2 {
+  def apply(
+    p1: Particle,
+    p2: Particle
+  ): Vector3D = {
+    // a vector from p1 to p2
+    val p12: Vector3D = p2.p - p1.p
+
+    val p12Norm = p12.normalize
+
+    val p12Length = p12.len
+
+    p12Norm * bigG * p1.m * p2.m / Math.pow(p12Length, 2)
+  }
 }
 
-trait SpringTrait extends Force2 {
-  val springConstant: Double
+trait SpringTrait extends ParticleFunction2 {
+  val springConstantTension: Double
+  val springConstantCompression: Double
   val restLength: Double
-  def springForce = (p1.p - p2.p).normalize * springConstant * (restLength - (p1.p - p2.p).len)
-  def force = springForce
+
+  def apply(
+    p1: Particle,
+    p2: Particle
+  ): Vector3D = {
+    // a vector from p1 to p2
+    val p12: Vector3D = p2.p - p1.p
+
+    // the distance between the two particles
+    val distance = p12.len
+
+    // distance of the particles relative to the rest length of the spring
+    val restDistance = distance - restLength
+
+    val springConst = if (restDistance > 0) springConstantTension else springConstantCompression
+
+    // normalize the vector between the two particles
+    val p12Norm = p12.normalize
+
+    p12Norm * springConst * restDistance
+  }
 }
 
 object SpringFactory {
@@ -207,32 +324,56 @@ object SpringFactory {
       Json.obj("type" -> JsString("Spring"))
     )
   }
+
+  val DefaultSpringConstant: Double = 1.0
+
+  def createForce(
+    p1: Particle,
+    p2: Particle,
+    springConstantTension: Option[Double],
+    springConstantCompression: Option[Double],
+    restLength: Option[Double],
+    maxForce: Option[Double]
+  ): Force2 =
+    Force2(
+      id = Force.nextForceId,
+      p1Id = p1.id,
+      p2Id = p2.id,
+      Spring(
+        springConstantTension = springConstantTension.getOrElse(DefaultSpringConstant),
+        springConstantCompression = springConstantCompression.getOrElse(DefaultSpringConstant),
+        restLength = restLength.getOrElse(p1.distance(p2))
+      ),
+      maxForce = maxForce.getOrElse(Double.MaxValue)
+    )
 }
 
 case class SpringFactory(
   pIds: List[List[Particle.ID]],
-  springConstant: Option[Double],
+  springConstantTension: Option[Double],
+  springConstantCompression: Option[Double],
   restLength: Option[Double],
   maxForce: Option[Double]
 ) extends Force2CombinationFactory(pIds) {
-  override def createForce(
+  override protected def createForces(
     p1: Particle,
     p2: Particle
-  ): Force = Spring(
-    p1 = p1,
-    p2 = p2,
-    springConstant = springConstant.getOrElse(1.0),
-    restLength = restLength.getOrElse(p1.distance(p2)),
-    maxForce = maxForce.getOrElse(Double.MaxValue)
+  ): List[Force2] = List(
+    SpringFactory.createForce(
+      p1,
+      p2,
+      springConstantTension,
+      springConstantCompression,
+      restLength,
+      maxForce
+    )
   )
 }
 
 case class Spring(
-  p1: Particle,
-  p2: Particle,
-  springConstant: Double,
-  restLength: Double,
-  override val maxForce: Double = Double.MaxValue
+  springConstantTension: Double,
+  springConstantCompression: Double,
+  restLength: Double
 ) extends SpringTrait
 
 object ConstantForceFactory {
@@ -249,19 +390,18 @@ case class ConstantForceFactory(
   pIds: List[Particle.ID],
   forceVector: Option[Vector3D]
 ) extends Force1Factory(pIds) {
-  override protected def createForce(
-    p1: Particle
-  ): Force = ConstantForce(
-    p1,
-    forceVector.getOrElse(Gravity.gv)
-  )
+  protected def createForce(particle: Particle): Force1 =
+    Force1(
+      id = Force.nextForceId,
+      pId = particle.id,
+      ConstantForceParticleFunction1(forceVector.getOrElse(Vector3D()))
+    )
 }
 
-case class ConstantForce(
-  p: Particle,
+case class ConstantForceParticleFunction1(
   forceVector: Vector3D
-) extends Force1 {
-  def force = forceVector
+) extends ParticleFunction1 {
+  def apply(p: Particle): Vector3D = forceVector
 }
 
 object RocketFactory {
@@ -276,21 +416,15 @@ object RocketFactory {
 
 case class RocketFactory(
   pIds: List[Particle.ID],
-  forceFunc: Option[ParticleFunction]
+  forceFunc: Option[ParticleFunction1]
 ) extends Force1Factory(pIds) {
-  override protected def createForce(
-    p1: Particle
-  ): Force = Rocket(
-    p1,
-    forceFunc.getOrElse(ConstantVector3DParticleFunction(Vector3D(y = 1.0)))
-  )
-}
 
-case class Rocket(
-  override val p: Particle,
-  forceFunc: ParticleFunction
-) extends Force1 {
-  def force = forceFunc(p)
+  protected def createForce(particle: Particle): Force1 =
+    Force1(
+      id = Force.nextForceId,
+      particle.id,
+      forceFunc.getOrElse(ConstantVector3DParticleFunction1(Vector3D(y = 1.0)))
+    )
 }
 
 object DragFactory {
@@ -307,32 +441,33 @@ case class DragFactory(
   pIds: List[Particle.ID],
   fluidDensity: Option[Double],
   dragCoeff: Option[Double],
-  flowFunc: Option[ParticleFunction]
+  flowFunc: Option[ParticleFunction1]
 ) extends Force1Factory(pIds) {
-  override protected def createForce(
-    p1: Particle
-  ): Force = Drag(
-    p1,
-    fluidDensity.getOrElse(0.5),
-    dragCoeff.getOrElse(0.47),
-    flowFunc.getOrElse(
-      ConstantVector3DParticleFunction(
-        vector = Vector3D.ZeroValue
+  override protected def createForce(particle: Particle): Force1 =
+    Force1(
+      id = Force.nextForceId,
+      pId = particle.id,
+      forceFunc = Drag(
+        fluidDensity.getOrElse(0.5),
+        dragCoeff.getOrElse(0.47),
+        flowFunc.getOrElse(
+          ConstantVector3DParticleFunction1(
+            vector = Vector3D.ZeroValue
+          )
+        )
       )
     )
-  )
 }
 
 case class Drag(
-  override val p: Particle,
   fluidDensity: Double = 0.5,
   dragCoeff: Double = 0.47,
-  flowFunc: ParticleFunction = ConstantVector3DParticleFunction(
+  flowFunc: ParticleFunction1 = ConstantVector3DParticleFunction1(
     vector = Vector3D.ZeroValue
   )
-) extends Force1 {
+) extends ParticleFunction1 {
   // m^2 / s^2 * kg / m^3 * m^2 = (kg * m) / s^2
-  def force = {
+  def apply(p: Particle): Vector3D = {
     val flow = flowFunc(p)
     val relativeFlow = flow - p.v
     val relativeSpeed = relativeFlow.len
@@ -340,10 +475,37 @@ case class Drag(
   }
 }
 
-trait DamperTrait extends Force2 {
-  val viscousDampingCoeff: Double
-  def damperForce = (p1.v - p2.v).projectOnTo(p1.p - p2.p) * -viscousDampingCoeff
-  def force = damperForce
+trait DamperTrait extends ParticleFunction2 {
+  val dampingCoeffTension: Double
+  val dampingCoeffCompression: Double
+
+  def apply(
+    p1: Particle,
+    p2: Particle
+  ) = {
+    // a vector from p1 to p2
+    val p12: Vector3D = p2.p - p1.p
+
+    // normalize the vector between the two particles
+    val p12Norm = p12.normalize
+
+    // get the scala projection of p1.v and p2.v onto p12Norm
+    // i.e. the particles' velocities along the vector between the particles
+    val a1: Double = p1.v.dotProduct(p12Norm)
+    val a2: Double = p2.v.dotProduct(p12Norm)
+
+    // calc the speed at which the particles are moving towards each other (positive/compression) or away (negative/tension)
+    val closingSpeed = a1 - a2
+
+    // determine if the particles are moving towards each other (compression) or away (tension)
+    val isInCompression: Boolean = closingSpeed > 0.0
+
+    // pick the correct damping coefficient
+    val dampingCoeff = if (isInCompression) dampingCoeffCompression else dampingCoeffTension
+
+    // calculate the damping force
+    p12Norm * closingSpeed * -dampingCoeff
+  }
 }
 
 object DamperFactory {
@@ -354,42 +516,64 @@ object DamperFactory {
       Json.obj("type" -> JsString("Damper"))
     )
   }
+
+  val DefaultDampingCoeff: Double = 20
+
+  def createForce(
+    p1: Particle,
+    p2: Particle,
+    dampingCoeffTension: Option[Double],
+    dampingCoeffCompression: Option[Double],
+    maxForce: Option[Double]
+  ): Force2 =
+    Force2(
+      id = Force.nextForceId,
+      p1.id,
+      p2.id,
+      forceFunc = Damper(
+        dampingCoeffTension.getOrElse(DefaultDampingCoeff),
+        dampingCoeffCompression.getOrElse(DefaultDampingCoeff)
+      ),
+      maxForce = maxForce.getOrElse(Double.MaxValue)
+    )
 }
 
 case class DamperFactory(
   pIds: List[List[Particle.ID]],
-  viscousDampingCoeff: Option[Double],
+  dampingCoeffTension: Option[Double],
+  dampingCoeffCompression: Option[Double],
   maxForce: Option[Double]
 ) extends Force2CombinationFactory(pIds) {
-  override protected def createForce(
+  override protected def createForces(
     p1: Particle,
     p2: Particle
-  ): Force = Damper(
-    p1,
-    p2,
-    viscousDampingCoeff.getOrElse(0.5),
-    maxForce.getOrElse(Double.MaxValue)
+  ): List[Force2] = List(
+    DamperFactory.createForce(
+      p1,
+      p2,
+      dampingCoeffTension,
+      dampingCoeffCompression,
+      maxForce
+    )
   )
 }
 
 /**
- * A damping force between two particles.
- * <pre>
- * F = -c v
- * </pre>
- * where c is the viscous damping coefficient in units of newton seconds per meter (N s/m)
- * and v is the relative velocity between the two particles.
- *
- * @param p1 particle 1
- * @param p2 particle 2
- * @param viscousDampingCoeff the viscous damping coefficient
- */
+  * A damping force between two particles.
+  * <pre>
+  * F = -c v
+  * </pre>
+  * where c is the viscous damping coefficient in units of newton seconds per meter (N s/m)
+  * and v is the relative velocity between the two particles.
+  *
+  * @param dampingCoeffTension the viscous damping coefficient when the damper is in tension
+  * @param dampingCoeffCompression the viscous damping coefficient when the damper is in compression
+  */
 case class Damper(
-  override val p1: Particle,
-  override val p2: Particle,
-  viscousDampingCoeff: Double,
-  override val maxForce: Double
+  dampingCoeffTension: Double,
+  dampingCoeffCompression: Double
 ) extends DamperTrait
+
 
 object SpringDamperFactory {
   implicit val playFormat: Format[SpringDamperFactory] = new Format[SpringDamperFactory] {
@@ -401,35 +585,41 @@ object SpringDamperFactory {
   }
 }
 
-
 case class SpringDamperFactory(
   pIds: List[List[Particle.ID]],
-  springConstant: Option[Double],
+  springConstTension: Option[Double],
+  springConstCompression: Option[Double],
   restLength: Option[Double],
-  viscousDampingCoeff: Option[Double],
-  maxForce: Option[Double]
+  dampingCoeffTension: Option[Double],
+  dampingCoeffCompression: Option[Double],
+  maxSpringForce: Option[Double],
+  maxDamperForce: Option[Double]
 ) extends Force2CombinationFactory(pIds) {
-  override protected def createForce(
+  def criticalDampingCoeffTension(mass: Double): Double =
+    2.0 * Math.sqrt(springConstTension.getOrElse(SpringFactory.DefaultSpringConstant) * mass)
+
+  def criticalDampingCoeffCompression(mass: Double): Double =
+    2.0 * Math.sqrt(springConstCompression.getOrElse(SpringFactory.DefaultSpringConstant) * mass)
+
+  override protected def createForces(
     p1: Particle,
     p2: Particle
-  ): Force = SpringDamper(
-    p1,
-    p2,
-    springConstant.getOrElse(1.0),
-    restLength.getOrElse(p1.distance(p2)),
-    viscousDampingCoeff.getOrElse(0.5),
-    maxForce.getOrElse(Double.MaxValue)
+  ): List[Force2] = List(
+    SpringFactory.createForce(
+      p1,
+      p2,
+      springConstTension,
+      springConstCompression,
+      restLength,
+      maxForce = maxSpringForce
+    ),
+    DamperFactory.createForce(
+      p1,
+      p2,
+      dampingCoeffTension = dampingCoeffTension.orElse[Double](Some(criticalDampingCoeffTension(p2.m))),
+      dampingCoeffCompression = dampingCoeffCompression.orElse[Double](Some(criticalDampingCoeffCompression(p2.m))),
+      maxForce = maxDamperForce
+    )
   )
-}
-
-case class SpringDamper(
-  p1: Particle,
-  p2: Particle,
-  springConstant: Double,
-  restLength: Double,
-  viscousDampingCoeff: Double,
-  override val maxForce: Double
-) extends SpringTrait with DamperTrait {
-  override def force = super.springForce + super.damperForce
 }
 

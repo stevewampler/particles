@@ -2,16 +2,29 @@ package com.sgw.particles.swing
 
 import java.awt.{Color, EventQueue, Graphics2D}
 
-import com.sgw.particles.model.ParticleSystem
+import com.sgw.particles.model.ParticleSystemFactory
+import play.api.libs.json.{Format, Json}
 
 import scala.swing.Panel
 import scala.swing.Swing._
 import scala.swing.event.{MousePressed, MouseReleased}
 
-case class ParticleSystemView(particleSystem: ParticleSystem) extends Panel {
-  val modelBounds = particleSystem.bounds
-  val width = 800
-  val height = 800
+object ParticleSystemView {
+  implicit def playFormat: Format[ParticleSystemView] = Json.format[ParticleSystemView]
+}
+
+case class ParticleSystemView(
+  particleSystemFactory: ParticleSystemFactory,
+  dt: Option[Double],
+  sleep: Option[Double]
+) extends Panel {
+  private var pSys = particleSystemFactory.createParticleSystem
+  private val width = 800
+  private val height = 800
+  private val _dt = dt.getOrElse(0.01)
+  private val _sleep = sleep.getOrElse(0.0)
+
+  def particleSystemName: String = pSys.name
 
   background = Color.white
   preferredSize = (width, height)
@@ -24,7 +37,7 @@ case class ParticleSystemView(particleSystem: ParticleSystem) extends Panel {
     case e: MouseReleased => onMouseReleased(e)
   }
 
-  def onMousePressed(e: MousePressed) = {
+  private def onMousePressed(e: MousePressed): Unit = {
     println("onMousePressed: " + e)
     requestFocusInWindow()
     if (e.triggersPopup) {
@@ -34,7 +47,7 @@ case class ParticleSystemView(particleSystem: ParticleSystem) extends Panel {
     }
   }
 
-  def onMouseReleased(e: MouseReleased) = {
+  private def onMouseReleased(e: MouseReleased): Unit = {
     println("onMouseReleased: " + e)
     requestFocusInWindow()
     if (e.triggersPopup) {
@@ -44,31 +57,35 @@ case class ParticleSystemView(particleSystem: ParticleSystem) extends Panel {
     }
   }
 
-  override def paintComponent(g: Graphics2D) = {
+  override def paintComponent(g: Graphics2D): Unit = {
     super.paintComponent(g)
-    renderers.foreach(renderer => renderer.render(g, modelBounds))
-  }
 
-  val renderers = (particleSystem.particles ++ particleSystem.forces).map(obj => Renderer(obj))
+    pSys.forceMap.values.foreach { force =>
+      ForceRenderer.render(
+        g,
+        pSys,
+        force
+      )
+    }
 
-  val runnable = new Runnable() {
-    var t = 0.0
-    def run() {
-      particleSystem.particles.foreach(particle => {
-        particle.next
-      })
-      particleSystem.forces.foreach(force => {
-        force.apply
-      })
-      particleSystem.particles.foreach(particle => {
-        particle(t)
-      })
-      repaint()
-      t = t + particleSystem.dt
+    pSys.particleMap.values.foreach { particle =>
+      ParticleRenderer.render(
+        g,
+        pSys,
+        particle
+      )
     }
   }
 
-  val simThread = new Thread("sim") {
+  private val runnable = new Runnable() {
+    def run() {
+      pSys = pSys(_dt)
+
+      repaint()
+    }
+  }
+
+  private val simThread = new Thread("sim") {
     var paused = false
 
     def togglePaused() = this.synchronized {
@@ -89,10 +106,10 @@ case class ParticleSystemView(particleSystem: ParticleSystem) extends Panel {
 
     override def run() {
       while (true) {
-        EventQueue.invokeLater(runnable)
+        EventQueue.invokeAndWait(runnable)
 
         try {
-          Thread.sleep((particleSystem.sleep * 1000L).toLong)
+          Thread.sleep((_sleep * 1000L).toLong)
 
           this.synchronized {
             while (paused)

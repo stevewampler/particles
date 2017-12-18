@@ -5,28 +5,12 @@ import play.api.libs.json.{Format, Json}
 object Vector3D {
   implicit val playFormat: Format[Vector3D] = Json.format[Vector3D]
 
-//  def apply(list: List[Double]): Vector3D = list.size match {
-//    case 0 => ZeroValue
-//    case 1 => apply(list(0))
-//    case 2 => apply(list(0), list(1))
-//    case _ => apply(list(0), list(1), list(2))
-//  }
-//  def apply(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0): Vector3D = new Vector3D(x, y, z)
-
   lazy val ZeroValue = Vector3D()
   lazy val MaxValue  = Vector3D(Double.MaxValue, Double.MaxValue, Double.MaxValue)
   lazy val MinValue  = Vector3D(Double.MinValue, Double.MinValue, Double.MinValue)
 }
 
 case class Vector3D(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) {
-//  val length = 3
-//
-//  def apply(i: Int) = i match {
-//    case 0 => x
-//    case 1 => y
-//    case 2 => z
-//    case _ => throw new ArrayIndexOutOfBoundsException(i)
-//  }
 
   def len = Math.sqrt(x*x + y*y + z*z)
 
@@ -34,7 +18,7 @@ case class Vector3D(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) {
   def add(v2: Vector3D) = Vector3D(x + v2.x, y + v2.y, z + v2.z)
   def add(s: Double) = Vector3D(x + s, y + s, z + s)
   def cross_product(v2: Vector3D) = Vector3D(x * v2.x, y * v2.y, z * v2.z)
-  def dot_product(v2: Vector3D) = x * v2.x + y * v2.y + z * v2.z
+  def dotProduct(v2: Vector3D) = x * v2.x + y * v2.y + z * v2.z
   def squared = cross_product(this)
   def inverse = Vector3D(1.0/x, 1.0/y, 1.0/z)
   def bounds(v2: Vector3D): Pair[Vector3D, Vector3D] = Pair(min(v2), max(v2))
@@ -45,7 +29,7 @@ case class Vector3D(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) {
   def scale(s: Double)  = Vector3D(x * s, y * s, z * s)
   def normalize = {
     val vlen = len
-    if (vlen < 0.000001) Vector3D() else this / len
+    if (vlen < 0.000001) Vector3D.ZeroValue else this / len
   }
 
   def round: Vector3D = Vector3D(x.round, y.round, z.round)
@@ -56,9 +40,11 @@ case class Vector3D(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) {
     scale(s).round.scale(1.0/s)
   }
 
-  def projectOnTo(v2: Vector3D) = {
+  def scalarProjectionOnTo(v2: Vector3D): Double = dotProduct(v2.normalize)
+
+  def vectorProjectionOnTo(v2: Vector3D): Vector3D = {
     val v2norm = v2.normalize
-    v2norm * dot_product(v2norm)
+    v2norm * this.dotProduct(v2norm)
   }
 
   def -(v2: Vector3D) = sub(v2)

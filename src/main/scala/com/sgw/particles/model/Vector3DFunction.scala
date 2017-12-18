@@ -175,5 +175,5 @@ object CompositeVector3DFunction {
 }
 
 case class CompositeVector3DFunction(funcs: Seq[Vector3DFunction]) extends Vector3DFunction {
-  def apply(v: Vector3D) = funcs.foldLeft(v)((v, func) => func(v))
+  def apply(v: Vector3D) = funcs.foldLeft(Vector3D.ZeroValue)((vAcc, func) => vAcc + func(v))
 }

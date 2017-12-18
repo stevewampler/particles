@@ -27,20 +27,25 @@ class Vector3DSpec extends FunSuite with Matchers {
   }
 
   test("The Vector3D projectOnTo method should return the projection of one vector onto another.") {
-    val v1 = Vector3D(1.0, 0.0, 0.0).projectOnTo(Vector3D(1.0, 1.0, 1.0))
+    val v1 = Vector3D(1.0, 0.0, 0.0).vectorProjectionOnTo(Vector3D(1.0, 1.0, 1.0))
     v1.x should be (0.33333 +- 0.00001)
     v1.y should be (0.33333 +- 0.00001)
     v1.z should be (0.33333 +- 0.00001)
 
-    val v2 = Vector3D(1.0, 0.0, 0.0).projectOnTo(Vector3D(-1.0, 1.0, 1.0))
+    val v2 = Vector3D(1.0, 0.0, 0.0).vectorProjectionOnTo(Vector3D(-1.0, 1.0, 1.0))
     v2.x should be (0.33333 +- 0.00001)
     v2.y should be (-0.33333 +- 0.00001)
     v2.z should be (-0.33333 +- 0.00001)
 
-    val v3 = Vector3D(-1.0, 0.0, 0.0).projectOnTo(Vector3D(1.0, 1.0, 1.0))
+    val v3 = Vector3D(-1.0, 0.0, 0.0).vectorProjectionOnTo(Vector3D(1.0, 1.0, 1.0))
     v3.x should be (-0.33333 +- 0.00001)
     v3.y should be (-0.33333 +- 0.00001)
     v3.z should be (-0.33333 +- 0.00001)
+
+    val v4 = Vector3D(-1.0, 1.0, 0.0).vectorProjectionOnTo(Vector3D(2.0, 1.0, 0.0))
+    v4.x should be (-0.39999 +- 0.00001)
+    v4.y should be (-0.19999 +- 0.00001)
+    v4.z should be (-0.00000 +- 0.00001)
   }
 
   test("Rounding a Vector3D should round every element of the vector.") {
