@@ -110,13 +110,12 @@ case class AnchoredStringParticleSystemFactory(
       fluidDensity = fluidDensity.getOrElse(0.5),
       dragCoeff = dragCoeff.getOrElse(0.47),
       flowFunc = dragFlowFunc.getOrElse(
-        ParticleTimeFunction(
-          SinWaveVector3DFunction(
-            offset  = Vector3D(10.0), // m/s
-            amplitude = Vector3D(20.0, 1.0), // m/s
-            frequency  = Vector3D(0.01, 1.0, 1.0), // cycles/sec
-            phase = Vector3D()
-          )
+        SinWaveParticleFunction(
+          offset    = Vector3D(10.0), // m/s
+          amplitude = Vector3D(20.0, 1.0), // m/s
+          frequency = Vector3D(0.01, 1.0, 1.0), // cycles/sec
+          phase     = ParticleTimeFunction(),
+          theta     = ParticlePositionFunction()
         )
       )
     )
@@ -263,13 +262,12 @@ case class AnchoredFlagParticleSystemFactory(
       fluidDensity = fluidDensity.getOrElse(0.5),
       dragCoeff = dragCoeff.getOrElse(0.47),
       flowFunc = dragFlowFunc.getOrElse(
-        ParticleTimeFunction(
-          SinWaveVector3DFunction(
-            offset  = Vector3D(10.0), // m/s
-            amplitude = Vector3D(20.0, 1.0), // m/s
-            frequency  = Vector3D(0.01, 1.0, 1.0), // cycles/sec
-            phase = Vector3D()
-          )
+        SinWaveParticleFunction(
+          offset    = Vector3D(10.0), // m/s
+          amplitude = Vector3D(20.0, 1.0), // m/s
+          frequency = Vector3D(0.01, 1.0, 1.0), // cycles/sec
+          phase     = ParticleTimeFunction(),
+          theta     = ParticlePositionFunction()
         )
       )
     )
@@ -298,7 +296,21 @@ case class AnchoredFlagParticleSystemFactory(
       (0 until numCols).map { colId =>
         val id = rowId * numCols + colId
 
-        val m1 = if (colId == 0) Double.MaxValue else m
+        val m1 = if (colId == 0) {
+          Double.MaxValue
+        } else if (rowId == 0 || rowId == numRows - 1) {
+          if (colId == numCols - 1) {
+            m / 4
+          } else {
+            m / 2
+          }
+        } else {
+          if (colId == numCols - 1) {
+            m / 2
+          } else {
+            m
+          }
+        }
 
         val area1 = if (rowId == 0 || rowId == numRows - 1) {
           if (colId == 0 || colId == numCols - 1) {
@@ -646,14 +658,13 @@ case class BeamParticleSystemFactory(
         fluidDensity = Some(fluidDensity),
         dragCoeff = Some(dragCoeff),
         flowFunc = Some(
-          ParticleTimeFunction(
-            SinWaveVector3DFunction(
-              offset  = Vector3D(10.0), // m/s
+            SinWaveParticleFunction(
+              offset    = Vector3D(10.0), // m/s
               amplitude = Vector3D(20.0, 1.0), // m/s
-              frequency  = Vector3D(0.01, 1.0, 1.0), // cycles/sec
-              phase = Vector3D()
+              frequency = Vector3D(0.01, 1.0, 1.0), // cycles/sec
+              phase     = ParticleTimeFunction(),
+              theta     = ParticlePositionFunction()
             )
-          )
         )
       ).createForces(particleMap)
     }

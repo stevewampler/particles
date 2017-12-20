@@ -9,23 +9,24 @@ object ParticleFunction1 {
       (json \ "type")
         .validate[String]
         .flatMap {
-          case "ConstantVector3DParticleFunction" => ConstantVector3DParticleFunction1.playFormat.reads(json)
+          case "ConstantParticleFunction" => ConstantParticleFunction.playFormat.reads(json)
           case "ParticleTimeFunction" => ParticleTimeFunction.playFormat.reads(json)
           case "ParticlePositionFunction" => ParticlePositionFunction.playFormat.reads(json)
-          case "ParticlePositionAndTimeFunction" => ParticlePositionAndTimeFunction.playFormat.reads(json)
-          case "ParticleVelocityFunction" => ParticleVelocityFunction.playFormat.reads(json)
-          case "CompositeParticleFunction1" => CompositeParticleFunction1.playFormat.reads(json)
+          case "ParticleVelocityFunction" => JsSuccess(ParticleVelocityFunction)
+          case "ParticleAccelerationFunction" => JsSuccess(ParticleAccelerationFunction)
+          case "CompositeParticleFunction" => CompositeParticleFunction.playFormat.reads(json)
+          case "SinWaveParticleFunction" => SinWaveParticleFunction.playFormat.reads(json)
         }
 
     override def writes(func: ParticleFunction1): JsValue = {
       func match {
-        case func: ConstantVector3DParticleFunction1 => ConstantVector3DParticleFunction1.playFormat.writes(func)
+        case func: ConstantParticleFunction => ConstantParticleFunction.playFormat.writes(func)
         case func: ParticleTimeFunction => ParticleTimeFunction.playFormat.writes(func)
         case func: ParticlePositionFunction => ParticlePositionFunction.playFormat.writes(func)
-        case func: ParticlePositionAndTimeFunction => ParticlePositionAndTimeFunction.playFormat.writes(func)
-        case func: ParticleVelocityFunction => ParticleVelocityFunction.playFormat.writes(func)
-        case func: ParticleAccelerationFunction => ParticleAccelerationFunction.playFormat.writes(func)
-        case func: CompositeParticleFunction1 => CompositeParticleFunction1.playFormat.writes(func)
+        case ParticleVelocityFunction => JsString("ParticleVelocityFunction")
+        case ParticleAccelerationFunction => JsString("ParticleAccelerationFunction")
+        case func: CompositeParticleFunction => CompositeParticleFunction.playFormat.writes(func)
+        case func: SinWaveParticleFunction => SinWaveParticleFunction.playFormat.writes(func)
       }
     }
   }
@@ -45,34 +46,35 @@ trait ParticleFunction2 {
   def apply(p1: Particle, p2: Particle): Vector3D
 }
 
-/*
-case class SinWaveParticleFunction(
-    offset: Vector3D = Vector3D(10.0), // m/s
-    amplitude: Vector3D = Vector3D(50.0), // m/s
-    frequency: Vector3D = Vector3D(0.25, 1.0, 1.0), // cycles/sec
-    phase: Vector3D = Vector3D()
-    // posPeriod: Vector3D = Vector3D(200.0, 0.0, 0.0), // m
-    // timePeriod: Double = 4.0 // s
-) extends ParticleFunction {
-  /*
-  val posMult = Vector3D(
-    if (posPeriod.x != 0.0) (2.0 * Math.PI) / posPeriod.x else 0.0,
-    if (posPeriod.y != 0.0) (2.0 * Math.PI) / posPeriod.y else 0.0,
-    if (posPeriod.z != 0.0) (2.0 * Math.PI) / posPeriod.z else 0.0
-  )
-  */
-  // val timeMult = 2.0 * Math.PI / timePeriod
-  def apply(p: Particle) = offset + (amplitude * (frequency * 2 * Math.PI * p.t + phase).sin)
+object SinWaveParticleFunction {
+  implicit val playFormat: Format[SinWaveParticleFunction] = new Format[SinWaveParticleFunction] {
+    override def reads(json: JsValue): JsResult[SinWaveParticleFunction] =
+      Json.reads[SinWaveParticleFunction].reads(json)
+
+    override def writes(func: SinWaveParticleFunction): JsValue =
+      Json.writes[SinWaveParticleFunction].writes(func).deepMerge(
+        Json.obj("type" -> JsString(func.getClass.getName))
+      )
+  }
 }
-*/
 
-object ConstantVector3DParticleFunction1 {
-  implicit val playFormat: Format[ConstantVector3DParticleFunction1] = new Format[ConstantVector3DParticleFunction1] {
-    override def reads(json: JsValue): JsResult[ConstantVector3DParticleFunction1] =
-      Json.reads[ConstantVector3DParticleFunction1].reads(json)
+case class SinWaveParticleFunction(
+  offset:    Vector3D = Vector3D.ZeroValue, // m/s
+  amplitude: Vector3D = Vector3D(1.0, 1.0, 1.0), // m/s
+  frequency: Vector3D = Vector3D(0.01, 0.01, 0.01), // cycles/sec
+  phase:     ParticleFunction1 = ParticleTimeFunction(), // radians
+  theta:     ParticleFunction1 = ParticlePositionFunction()
+) extends ParticleFunction1 {
+  def apply(p: Particle) = offset + (amplitude * (theta(p) * frequency * 2 * Math.PI + phase(p)).sin)
+}
 
-    override def writes(func: ConstantVector3DParticleFunction1): JsValue =
-      Json.writes[ConstantVector3DParticleFunction1].writes(func).deepMerge(
+object ConstantParticleFunction {
+  implicit val playFormat: Format[ConstantParticleFunction] = new Format[ConstantParticleFunction] {
+    override def reads(json: JsValue): JsResult[ConstantParticleFunction] =
+      Json.reads[ConstantParticleFunction].reads(json)
+
+    override def writes(func: ConstantParticleFunction): JsValue =
+      Json.writes[ConstantParticleFunction].writes(func).deepMerge(
         Json.obj("type" -> JsString(func.getClass.getName))
       )
   }
@@ -81,7 +83,7 @@ object ConstantVector3DParticleFunction1 {
 /**
   * A ParticleFunction that always returns the specified Vector3D.
   */
-case class ConstantVector3DParticleFunction1(vector: Vector3D) extends ParticleFunction1 {
+case class ConstantParticleFunction(vector: Vector3D) extends ParticleFunction1 {
   def apply(p: Particle) = vector
 }
 
@@ -96,11 +98,14 @@ object ParticleTimeFunction {
 }
 
 /**
-  * A ParticleFunction that applies the specified function to a particle's time.
-  * @param func The function to be applied to a Particle's time.
+  * A ParticleFunction that returns a particle's time as a 3D vector.
   */
-case class ParticleTimeFunction(func: Vector3DFunction) extends ParticleFunction1 {
-  def apply(p: Particle) = func(Vector3D(p.t, p.t, p.t))
+case class ParticleTimeFunction(f: Option[Vector3DFunction] = None) extends ParticleFunction1 {
+  def apply(p: Particle) = f.map { func =>
+    func(Vector3D(p.t, p.t, p.t))
+  }.getOrElse(
+    Vector3D(p.t, p.t, p.t)
+  )
 }
 
 object ParticlePositionFunction {
@@ -114,77 +119,60 @@ object ParticlePositionFunction {
 }
 
 /**
-  * A ParticleFunction that applies a specified Vector3DFunction to a Particle's position.
-  * @param func The function to be applied to a Particle's position.
+  * A function that returns a Particle's position.
   */
-case class ParticlePositionFunction(func: Vector3DFunction) extends ParticleFunction1 {
-  def apply(p: Particle) = func(p.p)
-}
-
-object ParticlePositionAndTimeFunction {
-  implicit val playFormat: Format[ParticlePositionAndTimeFunction] = new Format[ParticlePositionAndTimeFunction] {
-    override def reads(json: JsValue) = Json.reads[ParticlePositionAndTimeFunction].reads(json)
-
-    override def writes(func: ParticlePositionAndTimeFunction): JsValue = Json.writes[ParticlePositionAndTimeFunction].writes(func).deepMerge(
-      Json.obj("type" -> JsString(func.getClass.getName))
-    )
+case class ParticlePositionFunction(f: Option[Vector3DFunction] = None) extends ParticleFunction1 {
+  def apply(p: Particle) = f.map { func =>
+    func(p.p)
+  }.getOrElse {
+    p.p
   }
 }
+
+//object ParticleVelocityFunction {
+//  implicit val playFormat: Format[ParticleVelocityFunction] = new Format[ParticleVelocityFunction] {
+//    override def reads(json: JsValue) = Json.reads[ParticleVelocityFunction].reads(json)
+//
+//    override def writes(func: ParticleVelocityFunction): JsValue = Json.writes[ParticleVelocityFunction].writes(func).deepMerge(
+//      Json.obj("type" -> JsString(func.getClass.getName))
+//    )
+//  }
+//}
 
 /**
-  * A ParticleFunction that applies a specified Vector3DFunction to a Particle's position and time.
-  * @param func The function to be applied to a Particle's position.
+  * A function that returns a Particle's velocity.
   */
-case class ParticlePositionAndTimeFunction(func: Vector3DFunction) extends ParticleFunction1 {
-  def apply(p: Particle) = func(p.p + p.t)
+case object ParticleVelocityFunction extends ParticleFunction1 {
+  def apply(p: Particle) = p.v
 }
 
-object ParticleVelocityFunction {
-  implicit val playFormat: Format[ParticleVelocityFunction] = new Format[ParticleVelocityFunction] {
-    override def reads(json: JsValue) = Json.reads[ParticleVelocityFunction].reads(json)
-
-    override def writes(func: ParticleVelocityFunction): JsValue = Json.writes[ParticleVelocityFunction].writes(func).deepMerge(
-      Json.obj("type" -> JsString(func.getClass.getName))
-    )
-  }
-}
+//object ParticleAccelerationFunction {
+//  implicit val playFormat: Format[ParticleAccelerationFunction] = new Format[ParticleAccelerationFunction] {
+//    override def reads(json: JsValue) = Json.reads[ParticleAccelerationFunction].reads(json)
+//
+//    override def writes(func: ParticleAccelerationFunction): JsValue = Json.writes[ParticleAccelerationFunction].writes(func).deepMerge(
+//      Json.obj("type" -> JsString(func.getClass.getName))
+//    )
+//  }
+//}
 
 /**
-  * A ParticleFunction that applies a specified Vector3DFunction to a Particle's velocity.
-  * @param func The function to be applied to a Particle's velocity.
+  * A function that returns a Particle's acceleration.
   */
-case class ParticleVelocityFunction(func: Vector3DFunction) extends ParticleFunction1 {
-  def apply(p: Particle) = func(p.v)
+case object ParticleAccelerationFunction extends ParticleFunction1 {
+  def apply(p: Particle) = p.a
 }
 
-object ParticleAccelerationFunction {
-  implicit val playFormat: Format[ParticleAccelerationFunction] = new Format[ParticleAccelerationFunction] {
-    override def reads(json: JsValue) = Json.reads[ParticleAccelerationFunction].reads(json)
+object CompositeParticleFunction {
+  implicit val playFormat: Format[CompositeParticleFunction] = new Format[CompositeParticleFunction] {
+    override def reads(json: JsValue) = Json.reads[CompositeParticleFunction].reads(json)
 
-    override def writes(func: ParticleAccelerationFunction): JsValue = Json.writes[ParticleAccelerationFunction].writes(func).deepMerge(
+    override def writes(func: CompositeParticleFunction): JsValue = Json.writes[CompositeParticleFunction].writes(func).deepMerge(
       Json.obj("type" -> JsString(func.getClass.getName))
     )
   }
 }
 
-/**
-  * A ParticleFunction that applies a specified Vector3DFunction to a Particle's acceleration.
-  * @param func The function to be applied to a Particle's acceleration.
-  */
-case class ParticleAccelerationFunction(func: Vector3DFunction) extends ParticleFunction1 {
-  def apply(p: Particle) = func(p.a)
-}
-
-object CompositeParticleFunction1 {
-  implicit val playFormat: Format[CompositeParticleFunction1] = new Format[CompositeParticleFunction1] {
-    override def reads(json: JsValue) = Json.reads[CompositeParticleFunction1].reads(json)
-
-    override def writes(func: CompositeParticleFunction1): JsValue = Json.writes[CompositeParticleFunction1].writes(func).deepMerge(
-      Json.obj("type" -> JsString(func.getClass.getName))
-    )
-  }
-}
-
-case class CompositeParticleFunction1(funcs: Seq[ParticleFunction1]) extends ParticleFunction1 {
+case class CompositeParticleFunction(funcs: Seq[ParticleFunction1]) extends ParticleFunction1 {
   def apply(p: Particle) = funcs.foldLeft(Vector3D())((z, func) => z + func(p))
 }

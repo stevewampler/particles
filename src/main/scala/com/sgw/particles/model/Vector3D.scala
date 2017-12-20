@@ -6,6 +6,7 @@ object Vector3D {
   implicit val playFormat: Format[Vector3D] = Json.format[Vector3D]
 
   lazy val ZeroValue = Vector3D()
+  lazy val OnesValue = Vector3D(1.0, 1.0, 1.0)
   lazy val MaxValue  = Vector3D(Double.MaxValue, Double.MaxValue, Double.MaxValue)
   lazy val MinValue  = Vector3D(Double.MinValue, Double.MinValue, Double.MinValue)
 }
@@ -54,6 +55,8 @@ case class Vector3D(x: Double = 0.0, y: Double = 0.0, z: Double = 0.0) {
   def /(v2: Vector3D) = cross_product(v2.inverse)
   def *(s: Double)    = scale(s)
   def /(s: Double)    = scale(1.0/s)
+
+  def transform(f: Vector3D => Vector3D): Vector3D = f(this)
 
   override def toString: String = s"($x, $y, $z)"
 

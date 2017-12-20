@@ -67,10 +67,13 @@ object RandomVector3DFunction {
   }
 }
 
-case class RandomVector3DFunction(minFunc: Vector3DFunction, maxFunc: Vector3DFunction) extends Vector3DFunction {
+case class RandomVector3DFunction(
+  fMin: Option[Vector3DFunction] = Some(ConstantVector3DFunction(Vector3D.ZeroValue)),
+  fMax: Option[Vector3DFunction] = Some(ConstantVector3DFunction(Vector3D.OnesValue))
+) extends Vector3DFunction {
   def apply(v: Vector3D): Vector3D = {
-    val max = maxFunc(v)
-    val min = minFunc(v)
+    val min = fMin.map(f => f(v)).getOrElse(Vector3D.ZeroValue)
+    val max = fMax.map(f => f(v)).getOrElse(Vector3D.OnesValue)
     val rand = Math.random()
     Vector3D(
       rand * (max.x - min.x) + min.x,

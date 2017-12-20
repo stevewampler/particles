@@ -414,7 +414,7 @@ case class RocketFactory(
     Force1(
       id = Force.nextForceId,
       particle.id,
-      forceFunc.getOrElse(ConstantVector3DParticleFunction1(Vector3D(y = 1.0)))
+      forceFunc.getOrElse(ConstantParticleFunction(Vector3D(y = 1.0)))
     )
 }
 
@@ -442,7 +442,7 @@ case class DragFactory(
         fluidDensity.getOrElse(0.5),
         dragCoeff.getOrElse(0.47),
         flowFunc.getOrElse(
-          ConstantVector3DParticleFunction1(
+          ConstantParticleFunction(
             vector = Vector3D.ZeroValue
           )
         )
@@ -453,7 +453,7 @@ case class DragFactory(
 case class Drag(
   fluidDensity: Double = 0.5,
   dragCoeff: Double = 0.47,
-  flowFunc: ParticleFunction1 = ConstantVector3DParticleFunction1(
+  flowFunc: ParticleFunction1 = ConstantParticleFunction(
     vector = Vector3D.ZeroValue
   )
 ) extends ParticleFunction1 {
