@@ -93,9 +93,9 @@ object SinWaveVector3DFunction {
 }
 
 case class SinWaveVector3DFunction(
-  offset: Vector3D = Vector3D(10.0), // m/s
-  amplitude: Vector3D = Vector3D(50.0), // m/s
-  frequency: Vector3D = Vector3D(0.25, 1.0, 1.0), // cycles/sec
+  offset: Vector3D = Vector3D(0.0), // m/s
+  amplitude: Vector3D = Vector3D(0.0), // m/s
+  frequency: Vector3D = Vector3D(0.0, 0.0, 0.0), // cycles/sec
   phase: Vector3D = Vector3D() // radians
 ) extends Vector3DFunction {
   def apply(theta: Vector3D) = offset + (amplitude * (theta * frequency * 2 * Math.PI + phase).sin)

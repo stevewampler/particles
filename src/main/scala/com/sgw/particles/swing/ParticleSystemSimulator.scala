@@ -22,6 +22,7 @@ object ParticleSystemSimulator extends SimpleSwingApplication with Loggable {
   }
 
   override def startup(args: Array[String]) {
+    args.foreach(println)
     val psargs = Args(args)
 
     maybeParticleSystemView = psargs.getURI("file").map { uri =>

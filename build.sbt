@@ -2,7 +2,7 @@ name := "particles"
 
 version := "1.0"
 
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.5"
 
 sbtVersion := "0.13.16"
 
@@ -23,8 +23,8 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.13",
   "ch.qos.logback" % "logback-core" % "1.0.13",
   "org.slf4j" % "slf4j-api" % "1.7.5",
-  "org.scalatest" %% "scalatest" % "3.0.3" % "test",
-  "org.scala-lang.modules" %% "scala-swing" % "2.0.1",
-  "com.typesafe.play" %% "play-json" % "2.6.7"
+  "org.scalatest" %% "scalatest" % "3.0.5" % "test",
+  "org.scala-lang.modules" %% "scala-swing" % "2.0.3",
+  "com.typesafe.play" %% "play" % "2.6.15"
 )
     

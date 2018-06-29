@@ -180,23 +180,23 @@
           "func": {
             "type": "SinWaveVector3DFunction",
             "offset": {
-              "x": 10,
-              "y": 5,
+              "x": 2,
+              "y": 0,
               "z": 0
             },
             "amplitude": {
               "x": 10,
-              "y": 10,
+              "y": 0,
               "z": 0
             },
             "frequency": {
-              "x": 0.025,
-              "y": 0.010,
+              "x": 0.05,
+              "y": 0.0,
               "z": 0.0
             },
             "phase": {
-              "x": 1,
-              "y": 5,
+              "x": 0,
+              "y": 0,
               "z": 0
             }
           }

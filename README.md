@@ -32,7 +32,7 @@ To Do
 * Particles and Forces should be able to (optionally?) keep track of their past state as a time-series
 * Make the force calculations multi-threaded
 * Make the particle updates multi-threaded
-* Use flick or spark to perform large particle system calcs
+* Use flink or spark to perform large particle system calcs
 * FunctionForce: Takes a function for both the magnitude and direction of the force
 * Make all of a force's config parameters be functions.
 * RotatingVectorFunction(m: Double = 1.0, b: Double = 0.0) - apply(x: Double) = { y = m * x + b; Vector3D(Math.cos(y), Math.sin(y), 0.0) }
