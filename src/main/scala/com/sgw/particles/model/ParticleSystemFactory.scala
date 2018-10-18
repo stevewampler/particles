@@ -75,8 +75,8 @@ object AnchoredStringParticleSystemFactory {
 case class AnchoredStringParticleSystemFactory(
   name: Option[String],
   numParticles: Option[Int],
-  dx: Option[Int],
-  dy: Option[Int],
+  dx: Option[Double],
+  dy: Option[Double],
   m: Option[Double],
   radius: Option[Double],
   area: Option[Double],
@@ -95,8 +95,8 @@ case class AnchoredStringParticleSystemFactory(
     createParticleSystem(
       name = name.getOrElse("String"),
       numParticles = numParticles.getOrElse(8),
-      dx = dx.getOrElse(10),
-      dy = dy.getOrElse(10),
+      dx = dx.getOrElse(10.0),
+      dy = dy.getOrElse(10.0),
       m = m.getOrElse(1.0),
       radius = radius.getOrElse(1.0),
       area = area.getOrElse(1.0),
@@ -123,8 +123,8 @@ case class AnchoredStringParticleSystemFactory(
   def createParticleSystem(
     name: String,
     numParticles: Int,
-    dx: Int,
-    dy: Int,
+    dx: Double,
+    dy: Double,
     m: Double,
     radius: Double,
     area: Double,

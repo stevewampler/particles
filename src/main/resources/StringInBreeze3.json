@@ -1,0 +1,46 @@
+{
+  "type": "ParticleSystemView",
+  "particleSystemFactory": {
+    "type": "AnchoredStringParticleSystemFactory",
+    "name": "String",
+    "numParticles": 20,
+    "dx": 10,
+    "dy": 10,
+    "m": 1,
+    "radius": 1,
+    "area": 1,
+    "gravity": true,
+    "springConstantTension": 10000,
+    "springConstantCompression": 0,
+    "maxSpringForce": 100000,
+    "dampingCoeffTension": 20,
+    "dampingCoeffCompression": 0,
+    "dragFlowFunc": {
+      "type": "ParticleTimeFunction",
+      "func": {
+        "type": "SinWaveVector3DFunction",
+        "offset": {
+          "x": 0,
+          "y": 5,
+          "z": 0
+        },
+        "amplitude": {
+          "x": 30,
+          "y": 10,
+          "z": 0
+        },
+        "frequency": {
+          "x": 0.025,
+          "y": 0.010,
+          "z": 0.0
+        },
+        "phase": {
+          "x": 1,
+          "y": 5,
+          "z": 0
+        }
+      }
+    }
+  },
+  "dt": 0.01
+}
